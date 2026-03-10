@@ -158,6 +158,7 @@ import { OKX_V6_A } from './OKX-V6-A'
 import { WBNB_A } from './WBNB-A'
 import { FLUID_DEX_V2_MM_A } from './FLUID-DEX-V2-MM-A'
 import { INSTA_MEMORY_UTILS_A } from './INSTA-MEMORY-UTILS-A'
+import { LISTA_DAO_A } from './LISTA-DAO-A'
 
 export const connectorsV2_M1 = {
   'MORPHO-REWARDS-A': MORPHO_REWARDS_A,
@@ -315,4 +316,5 @@ export const connectorsV2_M1 = {
   'WBNB-A': WBNB_A,
   'FLUID-DEX-V2-MM-A': FLUID_DEX_V2_MM_A,
   'INSTA-MEMORY-UTILS-A': INSTA_MEMORY_UTILS_A,
+  'LISTA-DAO-A': LISTA_DAO_A,
 }
