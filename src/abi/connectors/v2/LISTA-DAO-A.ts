@@ -5,6 +5,7 @@ export const LISTA_DAO_A: AbiItem[] = [
     anonymous: false,
     inputs: [
       { indexed: true, internalType: 'Id', name: 'id', type: 'bytes32' },
+      { indexed: true, internalType: 'address', name: 'onBehalf', type: 'address' },
       { indexed: false, internalType: 'uint256', name: 'amounts', type: 'uint256' },
       { indexed: false, internalType: 'uint256', name: 'shares', type: 'uint256' },
       { indexed: false, internalType: 'uint256', name: 'getId', type: 'uint256' },
@@ -17,20 +18,7 @@ export const LISTA_DAO_A: AbiItem[] = [
     anonymous: false,
     inputs: [
       { indexed: true, internalType: 'Id', name: 'id', type: 'bytes32' },
-      { indexed: false, internalType: 'uint256', name: 'amounts', type: 'uint256' },
-      { indexed: false, internalType: 'uint256', name: 'shares', type: 'uint256' },
       { indexed: true, internalType: 'address', name: 'onBehalf', type: 'address' },
-      { indexed: true, internalType: 'address', name: 'receiver', type: 'address' },
-      { indexed: false, internalType: 'uint256', name: 'getId', type: 'uint256' },
-      { indexed: false, internalType: 'uint256', name: 'setId', type: 'uint256' }
-    ],
-    name: 'LogBorrowOnBehalf',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, internalType: 'Id', name: 'id', type: 'bytes32' },
       { indexed: false, internalType: 'uint256', name: 'amounts', type: 'uint256' },
       { indexed: false, internalType: 'uint256', name: 'shares', type: 'uint256' },
       { indexed: false, internalType: 'uint256', name: 'getId', type: 'uint256' },
@@ -43,31 +31,7 @@ export const LISTA_DAO_A: AbiItem[] = [
     anonymous: false,
     inputs: [
       { indexed: true, internalType: 'Id', name: 'id', type: 'bytes32' },
-      { indexed: false, internalType: 'uint256', name: 'amounts', type: 'uint256' },
-      { indexed: false, internalType: 'uint256', name: 'shares', type: 'uint256' },
       { indexed: true, internalType: 'address', name: 'onBehalf', type: 'address' },
-      { indexed: false, internalType: 'uint256', name: 'getId', type: 'uint256' },
-      { indexed: false, internalType: 'uint256', name: 'setId', type: 'uint256' }
-    ],
-    name: 'LogRepayOnBehalf',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, internalType: 'Id', name: 'id', type: 'bytes32' },
-      { indexed: false, internalType: 'uint256', name: 'assets', type: 'uint256' },
-      { indexed: false, internalType: 'uint256', name: 'shares', type: 'uint256' },
-      { indexed: false, internalType: 'uint256', name: 'getId', type: 'uint256' },
-      { indexed: false, internalType: 'uint256', name: 'setId', type: 'uint256' }
-    ],
-    name: 'LogSupplyAssets',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, internalType: 'Id', name: 'id', type: 'bytes32' },
       { indexed: false, internalType: 'uint256', name: 'assets', type: 'uint256' },
       { indexed: false, internalType: 'uint256', name: 'getId', type: 'uint256' },
       { indexed: false, internalType: 'uint256', name: 'setId', type: 'uint256' }
@@ -79,75 +43,12 @@ export const LISTA_DAO_A: AbiItem[] = [
     anonymous: false,
     inputs: [
       { indexed: true, internalType: 'Id', name: 'id', type: 'bytes32' },
-      { indexed: false, internalType: 'uint256', name: 'assets', type: 'uint256' },
       { indexed: true, internalType: 'address', name: 'onBehalf', type: 'address' },
-      { indexed: false, internalType: 'uint256', name: 'getId', type: 'uint256' },
-      { indexed: false, internalType: 'uint256', name: 'setId', type: 'uint256' }
-    ],
-    name: 'LogSupplyCollateralOnBehalf',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, internalType: 'Id', name: 'id', type: 'bytes32' },
-      { indexed: false, internalType: 'uint256', name: 'assets', type: 'uint256' },
-      { indexed: false, internalType: 'uint256', name: 'shares', type: 'uint256' },
-      { indexed: true, internalType: 'address', name: 'onBehalf', type: 'address' },
-      { indexed: false, internalType: 'uint256', name: 'getId', type: 'uint256' },
-      { indexed: false, internalType: 'uint256', name: 'setId', type: 'uint256' }
-    ],
-    name: 'LogSupplyOnBehalf',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, internalType: 'Id', name: 'id', type: 'bytes32' },
       { indexed: false, internalType: 'uint256', name: 'amounts', type: 'uint256' },
-      { indexed: false, internalType: 'uint256', name: 'shares', type: 'uint256' },
       { indexed: false, internalType: 'uint256', name: 'getId', type: 'uint256' },
       { indexed: false, internalType: 'uint256', name: 'setId', type: 'uint256' }
     ],
     name: 'LogWithdraw',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, internalType: 'Id', name: 'id', type: 'bytes32' },
-      { indexed: false, internalType: 'uint256', name: 'amounts', type: 'uint256' },
-      { indexed: false, internalType: 'uint256', name: 'getId', type: 'uint256' },
-      { indexed: false, internalType: 'uint256', name: 'setId', type: 'uint256' }
-    ],
-    name: 'LogWithdrawCollateral',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, internalType: 'Id', name: 'id', type: 'bytes32' },
-      { indexed: false, internalType: 'uint256', name: 'amounts', type: 'uint256' },
-      { indexed: true, internalType: 'address', name: 'onBehalf', type: 'address' },
-      { indexed: true, internalType: 'address', name: 'receiver', type: 'address' },
-      { indexed: false, internalType: 'uint256', name: 'getId', type: 'uint256' },
-      { indexed: false, internalType: 'uint256', name: 'setId', type: 'uint256' }
-    ],
-    name: 'LogWithdrawCollateralOnBehalf',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, internalType: 'Id', name: 'id', type: 'bytes32' },
-      { indexed: false, internalType: 'uint256', name: 'amounts', type: 'uint256' },
-      { indexed: false, internalType: 'uint256', name: 'shares', type: 'uint256' },
-      { indexed: true, internalType: 'address', name: 'onBehalf', type: 'address' },
-      { indexed: true, internalType: 'address', name: 'receiver', type: 'address' },
-      { indexed: false, internalType: 'uint256', name: 'getId', type: 'uint256' },
-      { indexed: false, internalType: 'uint256', name: 'setId', type: 'uint256' }
-    ],
-    name: 'LogWithdrawOnBehalf',
     type: 'event'
   },
   {
@@ -171,67 +72,12 @@ export const LISTA_DAO_A: AbiItem[] = [
         name: '_marketParams',
         type: 'tuple'
       },
+      { internalType: 'address', name: '_onBehalf', type: 'address' },
       { internalType: 'uint256', name: '_assets', type: 'uint256' },
       { internalType: 'uint256', name: '_getId', type: 'uint256' },
       { internalType: 'uint256', name: '_setId', type: 'uint256' }
     ],
     name: 'borrow',
-    outputs: [
-      { internalType: 'string', name: '_eventName', type: 'string' },
-      { internalType: 'bytes', name: '_eventParam', type: 'bytes' }
-    ],
-    stateMutability: 'payable',
-    type: 'function'
-  },
-  {
-    inputs: [
-      {
-        components: [
-          { internalType: 'address', name: 'loanToken', type: 'address' },
-          { internalType: 'address', name: 'collateralToken', type: 'address' },
-          { internalType: 'address', name: 'oracle', type: 'address' },
-          { internalType: 'address', name: 'irm', type: 'address' },
-          { internalType: 'uint256', name: 'lltv', type: 'uint256' }
-        ],
-        internalType: 'struct MarketParams',
-        name: '_marketParams',
-        type: 'tuple'
-      },
-      { internalType: 'uint256', name: '_assets', type: 'uint256' },
-      { internalType: 'address', name: '_onBehalf', type: 'address' },
-      { internalType: 'address', name: '_receiver', type: 'address' },
-      { internalType: 'uint256', name: '_getId', type: 'uint256' },
-      { internalType: 'uint256', name: '_setId', type: 'uint256' }
-    ],
-    name: 'borrowOnBehalf',
-    outputs: [
-      { internalType: 'string', name: '_eventName', type: 'string' },
-      { internalType: 'bytes', name: '_eventParam', type: 'bytes' }
-    ],
-    stateMutability: 'payable',
-    type: 'function'
-  },
-  {
-    inputs: [
-      {
-        components: [
-          { internalType: 'address', name: 'loanToken', type: 'address' },
-          { internalType: 'address', name: 'collateralToken', type: 'address' },
-          { internalType: 'address', name: 'oracle', type: 'address' },
-          { internalType: 'address', name: 'irm', type: 'address' },
-          { internalType: 'uint256', name: 'lltv', type: 'uint256' }
-        ],
-        internalType: 'struct MarketParams',
-        name: '_marketParams',
-        type: 'tuple'
-      },
-      { internalType: 'uint256', name: '_shares', type: 'uint256' },
-      { internalType: 'address', name: '_onBehalf', type: 'address' },
-      { internalType: 'address', name: '_receiver', type: 'address' },
-      { internalType: 'uint256', name: '_getId', type: 'uint256' },
-      { internalType: 'uint256', name: '_setId', type: 'uint256' }
-    ],
-    name: 'borrowOnBehalfShares',
     outputs: [
       { internalType: 'string', name: '_eventName', type: 'string' },
       { internalType: 'bytes', name: '_eventParam', type: 'bytes' }
@@ -260,6 +106,7 @@ export const LISTA_DAO_A: AbiItem[] = [
         name: '_marketParams',
         type: 'tuple'
       },
+      { internalType: 'address', name: '_onBehalf', type: 'address' },
       { internalType: 'uint256', name: '_assets', type: 'uint256' },
       { internalType: 'uint256', name: '_getId', type: 'uint256' },
       { internalType: 'uint256', name: '_setId', type: 'uint256' }
@@ -286,60 +133,7 @@ export const LISTA_DAO_A: AbiItem[] = [
         name: '_marketParams',
         type: 'tuple'
       },
-      { internalType: 'uint256', name: '_assets', type: 'uint256' },
       { internalType: 'address', name: '_onBehalf', type: 'address' },
-      { internalType: 'uint256', name: '_getId', type: 'uint256' },
-      { internalType: 'uint256', name: '_setId', type: 'uint256' }
-    ],
-    name: 'repayOnBehalf',
-    outputs: [
-      { internalType: 'string', name: '_eventName', type: 'string' },
-      { internalType: 'bytes', name: '_eventParam', type: 'bytes' }
-    ],
-    stateMutability: 'payable',
-    type: 'function'
-  },
-  {
-    inputs: [
-      {
-        components: [
-          { internalType: 'address', name: 'loanToken', type: 'address' },
-          { internalType: 'address', name: 'collateralToken', type: 'address' },
-          { internalType: 'address', name: 'oracle', type: 'address' },
-          { internalType: 'address', name: 'irm', type: 'address' },
-          { internalType: 'uint256', name: 'lltv', type: 'uint256' }
-        ],
-        internalType: 'struct MarketParams',
-        name: '_marketParams',
-        type: 'tuple'
-      },
-      { internalType: 'uint256', name: '_shares', type: 'uint256' },
-      { internalType: 'address', name: '_onBehalf', type: 'address' },
-      { internalType: 'uint256', name: '_getId', type: 'uint256' },
-      { internalType: 'uint256', name: '_setId', type: 'uint256' }
-    ],
-    name: 'repayOnBehalfShares',
-    outputs: [
-      { internalType: 'string', name: '_eventName', type: 'string' },
-      { internalType: 'bytes', name: '_eventParam', type: 'bytes' }
-    ],
-    stateMutability: 'payable',
-    type: 'function'
-  },
-  {
-    inputs: [
-      {
-        components: [
-          { internalType: 'address', name: 'loanToken', type: 'address' },
-          { internalType: 'address', name: 'collateralToken', type: 'address' },
-          { internalType: 'address', name: 'oracle', type: 'address' },
-          { internalType: 'address', name: 'irm', type: 'address' },
-          { internalType: 'uint256', name: 'lltv', type: 'uint256' }
-        ],
-        internalType: 'struct MarketParams',
-        name: '_marketParams',
-        type: 'tuple'
-      },
       { internalType: 'uint256', name: '_assets', type: 'uint256' },
       { internalType: 'uint256', name: '_getId', type: 'uint256' },
       { internalType: 'uint256', name: '_setId', type: 'uint256' }
@@ -366,228 +160,12 @@ export const LISTA_DAO_A: AbiItem[] = [
         name: '_marketParams',
         type: 'tuple'
       },
-      { internalType: 'uint256', name: '_assets', type: 'uint256' },
-      { internalType: 'uint256', name: '_getId', type: 'uint256' },
-      { internalType: 'uint256', name: '_setId', type: 'uint256' }
-    ],
-    name: 'supplyCollateral',
-    outputs: [
-      { internalType: 'string', name: '_eventName', type: 'string' },
-      { internalType: 'bytes', name: '_eventParam', type: 'bytes' }
-    ],
-    stateMutability: 'payable',
-    type: 'function'
-  },
-  {
-    inputs: [
-      {
-        components: [
-          { internalType: 'address', name: 'loanToken', type: 'address' },
-          { internalType: 'address', name: 'collateralToken', type: 'address' },
-          { internalType: 'address', name: 'oracle', type: 'address' },
-          { internalType: 'address', name: 'irm', type: 'address' },
-          { internalType: 'uint256', name: 'lltv', type: 'uint256' }
-        ],
-        internalType: 'struct MarketParams',
-        name: '_marketParams',
-        type: 'tuple'
-      },
-      { internalType: 'uint256', name: '_assets', type: 'uint256' },
       { internalType: 'address', name: '_onBehalf', type: 'address' },
-      { internalType: 'uint256', name: '_getId', type: 'uint256' },
-      { internalType: 'uint256', name: '_setId', type: 'uint256' }
-    ],
-    name: 'supplyCollateralOnBehalf',
-    outputs: [
-      { internalType: 'string', name: '_eventName', type: 'string' },
-      { internalType: 'bytes', name: '_eventParam', type: 'bytes' }
-    ],
-    stateMutability: 'payable',
-    type: 'function'
-  },
-  {
-    inputs: [
-      {
-        components: [
-          { internalType: 'address', name: 'loanToken', type: 'address' },
-          { internalType: 'address', name: 'collateralToken', type: 'address' },
-          { internalType: 'address', name: 'oracle', type: 'address' },
-          { internalType: 'address', name: 'irm', type: 'address' },
-          { internalType: 'uint256', name: 'lltv', type: 'uint256' }
-        ],
-        internalType: 'struct MarketParams',
-        name: '_marketParams',
-        type: 'tuple'
-      },
-      { internalType: 'uint256', name: '_assets', type: 'uint256' },
-      { internalType: 'address', name: '_onBehalf', type: 'address' },
-      { internalType: 'uint256', name: '_getId', type: 'uint256' },
-      { internalType: 'uint256', name: '_setId', type: 'uint256' }
-    ],
-    name: 'supplyOnBehalf',
-    outputs: [
-      { internalType: 'string', name: '_eventName', type: 'string' },
-      { internalType: 'bytes', name: '_eventParam', type: 'bytes' }
-    ],
-    stateMutability: 'payable',
-    type: 'function'
-  },
-  {
-    inputs: [
-      {
-        components: [
-          { internalType: 'address', name: 'loanToken', type: 'address' },
-          { internalType: 'address', name: 'collateralToken', type: 'address' },
-          { internalType: 'address', name: 'oracle', type: 'address' },
-          { internalType: 'address', name: 'irm', type: 'address' },
-          { internalType: 'uint256', name: 'lltv', type: 'uint256' }
-        ],
-        internalType: 'struct MarketParams',
-        name: '_marketParams',
-        type: 'tuple'
-      },
-      { internalType: 'uint256', name: '_shares', type: 'uint256' },
-      { internalType: 'address', name: '_onBehalf', type: 'address' },
-      { internalType: 'uint256', name: '_getId', type: 'uint256' },
-      { internalType: 'uint256', name: '_setId', type: 'uint256' }
-    ],
-    name: 'supplySharesOnBehalf',
-    outputs: [
-      { internalType: 'string', name: '_eventName', type: 'string' },
-      { internalType: 'bytes', name: '_eventParam', type: 'bytes' }
-    ],
-    stateMutability: 'payable',
-    type: 'function'
-  },
-  {
-    inputs: [
-      {
-        components: [
-          { internalType: 'address', name: 'loanToken', type: 'address' },
-          { internalType: 'address', name: 'collateralToken', type: 'address' },
-          { internalType: 'address', name: 'oracle', type: 'address' },
-          { internalType: 'address', name: 'irm', type: 'address' },
-          { internalType: 'uint256', name: 'lltv', type: 'uint256' }
-        ],
-        internalType: 'struct MarketParams',
-        name: '_marketParams',
-        type: 'tuple'
-      },
       { internalType: 'uint256', name: '_assets', type: 'uint256' },
       { internalType: 'uint256', name: '_getId', type: 'uint256' },
       { internalType: 'uint256', name: '_setId', type: 'uint256' }
     ],
     name: 'withdraw',
-    outputs: [
-      { internalType: 'string', name: '_eventName', type: 'string' },
-      { internalType: 'bytes', name: '_eventParam', type: 'bytes' }
-    ],
-    stateMutability: 'payable',
-    type: 'function'
-  },
-  {
-    inputs: [
-      {
-        components: [
-          { internalType: 'address', name: 'loanToken', type: 'address' },
-          { internalType: 'address', name: 'collateralToken', type: 'address' },
-          { internalType: 'address', name: 'oracle', type: 'address' },
-          { internalType: 'address', name: 'irm', type: 'address' },
-          { internalType: 'uint256', name: 'lltv', type: 'uint256' }
-        ],
-        internalType: 'struct MarketParams',
-        name: '_marketParams',
-        type: 'tuple'
-      },
-      { internalType: 'uint256', name: '_assets', type: 'uint256' },
-      { internalType: 'uint256', name: '_getId', type: 'uint256' },
-      { internalType: 'uint256', name: '_setId', type: 'uint256' }
-    ],
-    name: 'withdrawCollateral',
-    outputs: [
-      { internalType: 'string', name: '_eventName', type: 'string' },
-      { internalType: 'bytes', name: '_eventParam', type: 'bytes' }
-    ],
-    stateMutability: 'payable',
-    type: 'function'
-  },
-  {
-    inputs: [
-      {
-        components: [
-          { internalType: 'address', name: 'loanToken', type: 'address' },
-          { internalType: 'address', name: 'collateralToken', type: 'address' },
-          { internalType: 'address', name: 'oracle', type: 'address' },
-          { internalType: 'address', name: 'irm', type: 'address' },
-          { internalType: 'uint256', name: 'lltv', type: 'uint256' }
-        ],
-        internalType: 'struct MarketParams',
-        name: '_marketParams',
-        type: 'tuple'
-      },
-      { internalType: 'uint256', name: '_assets', type: 'uint256' },
-      { internalType: 'address', name: '_onBehalf', type: 'address' },
-      { internalType: 'address', name: '_receiver', type: 'address' },
-      { internalType: 'uint256', name: '_getId', type: 'uint256' },
-      { internalType: 'uint256', name: '_setId', type: 'uint256' }
-    ],
-    name: 'withdrawCollateralOnBehalf',
-    outputs: [
-      { internalType: 'string', name: '_eventName', type: 'string' },
-      { internalType: 'bytes', name: '_eventParam', type: 'bytes' }
-    ],
-    stateMutability: 'payable',
-    type: 'function'
-  },
-  {
-    inputs: [
-      {
-        components: [
-          { internalType: 'address', name: 'loanToken', type: 'address' },
-          { internalType: 'address', name: 'collateralToken', type: 'address' },
-          { internalType: 'address', name: 'oracle', type: 'address' },
-          { internalType: 'address', name: 'irm', type: 'address' },
-          { internalType: 'uint256', name: 'lltv', type: 'uint256' }
-        ],
-        internalType: 'struct MarketParams',
-        name: '_marketParams',
-        type: 'tuple'
-      },
-      { internalType: 'uint256', name: '_assets', type: 'uint256' },
-      { internalType: 'address', name: '_onBehalf', type: 'address' },
-      { internalType: 'address', name: '_receiver', type: 'address' },
-      { internalType: 'uint256', name: '_getId', type: 'uint256' },
-      { internalType: 'uint256', name: '_setId', type: 'uint256' }
-    ],
-    name: 'withdrawOnBehalf',
-    outputs: [
-      { internalType: 'string', name: '_eventName', type: 'string' },
-      { internalType: 'bytes', name: '_eventParam', type: 'bytes' }
-    ],
-    stateMutability: 'payable',
-    type: 'function'
-  },
-  {
-    inputs: [
-      {
-        components: [
-          { internalType: 'address', name: 'loanToken', type: 'address' },
-          { internalType: 'address', name: 'collateralToken', type: 'address' },
-          { internalType: 'address', name: 'oracle', type: 'address' },
-          { internalType: 'address', name: 'irm', type: 'address' },
-          { internalType: 'uint256', name: 'lltv', type: 'uint256' }
-        ],
-        internalType: 'struct MarketParams',
-        name: '_marketParams',
-        type: 'tuple'
-      },
-      { internalType: 'uint256', name: '_shares', type: 'uint256' },
-      { internalType: 'address', name: '_onBehalf', type: 'address' },
-      { internalType: 'address', name: '_receiver', type: 'address' },
-      { internalType: 'uint256', name: '_getId', type: 'uint256' },
-      { internalType: 'uint256', name: '_setId', type: 'uint256' }
-    ],
-    name: 'withdrawSharesOnBehalf',
     outputs: [
       { internalType: 'string', name: '_eventName', type: 'string' },
       { internalType: 'bytes', name: '_eventParam', type: 'bytes' }
