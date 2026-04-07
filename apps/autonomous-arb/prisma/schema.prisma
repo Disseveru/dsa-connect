@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum JobStatus {
+  pending
+  running
+  completed
+  failed
+}
+
+enum ExecutionStatus {
+  pending
+  submitted
+  confirmed
+  failed
+  skipped
+}
+
+model User {
+  id            String            @id @default(cuid())
+  wallet        String            @unique
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  dsaAccounts   DsaAccount[]
+  settings      StrategySettings?
+  opportunities Opportunity[]
+  executions    Execution[]
+}
+
+model DsaAccount {
+  id                   String            @id @default(cuid())
+  userId               String
+  dsaId                Int
+  address              String
+  version              Int               @default(2)
+  authorityEnabled     Boolean           @default(false)
+  executorAuthority    String?
+  lastAuthorityCheckAt DateTime?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  user                 User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  settings             StrategySettings?
+
+  @@unique([userId, dsaId])
+}
+
+model StrategySettings {
+  id                     String      @id @default(cuid())
+  userId                 String      @unique
+  dsaAccountId           String      @unique
+  enabled                Boolean     @default(false)
+  strategyPaused         Boolean     @default(false)
+  minNetProfitUsd        Decimal     @default(10) @db.Decimal(18, 6)
+  maxSlippageBps         Int         @default(40)
+  gasCeilingGwei         Decimal     @default(0.2) @db.Decimal(18, 6)
+  maxPositionUsd         Decimal     @default(500) @db.Decimal(18, 6)
+  allowedPairs           Json
+  cooldownSeconds        Int         @default(60)
+  dailyLossCapUsd        Decimal     @default(100) @db.Decimal(18, 6)
+  perTokenExposureUsd    Json
+  quoteStaleAfterMs      Int         @default(15000)
+  liquidityDepthBps      Int         @default(700)
+  consecutiveFailureLimit Int        @default(3)
+  consecutiveFailures    Int         @default(0)
+  lastExecutedAt         DateTime?
+  lastResetAt            DateTime?   @default(now())
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+  user                   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dsaAccount             DsaAccount  @relation(fields: [dsaAccountId], references: [id], onDelete: Cascade)
+  opportunities          Opportunity[]
+  executions             Execution[]
+}
+
+model GlobalState {
+  id             Int       @id
+  globalPaused   Boolean   @default(false)
+  pauseReason    String?
+  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime  @default(now())
+}
+
+model Opportunity {
+  id                String            @id @default(cuid())
+  userId            String
+  settingsId        String
+  sourceDex         String
+  targetDex         String
+  borrowToken       String
+  midToken          String
+  borrowAmountWei   String
+  borrowAmountUsd   Decimal           @db.Decimal(18, 6)
+  grossProfitUsd    Decimal           @db.Decimal(18, 6)
+  netProfitUsd      Decimal           @db.Decimal(18, 6)
+  gasCostUsd        Decimal           @db.Decimal(18, 6)
+  flashFeeUsd       Decimal           @db.Decimal(18, 6)
+  slippageImpactUsd Decimal           @db.Decimal(18, 6)
+  confidenceScore   Decimal           @db.Decimal(5, 2)
+  quoteTimestamp    DateTime
+  quoteAgeMs        Int
+  executable        Boolean           @default(false)
+  execution         Execution?
+  createdAt         DateTime          @default(now())
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  settings          StrategySettings  @relation(fields: [settingsId], references: [id], onDelete: Cascade)
+
+  @@index([settingsId, createdAt])
+}
+
+model Job {
+  id             String    @id @default(cuid())
+  type           String
+  status         JobStatus @default(pending)
+  idempotencyKey String    @unique
+  payload        Json
+  runAt          DateTime  @default(now())
+  attempts       Int       @default(0)
+  lockedAt       DateTime?
+  lastError      String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Execution {
+  id                String           @id @default(cuid())
+  userId            String
+  settingsId        String
+  opportunityId     String?          @unique
+  status            ExecutionStatus  @default(pending)
+  idempotencyKey    String           @unique
+  txHash            String?
+  txNonce           Int?
+  arbiscanUrl       String?
+  borrowToken       String
+  borrowAmountWei   String
+  estimatedNetUsd   Decimal          @db.Decimal(18, 6)
+  realizedPnlUsd    Decimal?         @db.Decimal(18, 6)
+  gasUsed           String?
+  gasPriceWei       String?
+  failureReason     String?
+  routeDescription  String
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  settings          StrategySettings @relation(fields: [settingsId], references: [id], onDelete: Cascade)
+  opportunity       Opportunity?     @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+}
+
+model WorkerHeartbeat {
+  id         String   @id
+  lastSeenAt DateTime
+  message    String?
+  updatedAt  DateTime @updatedAt
+}
