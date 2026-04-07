@@ -1,0 +1,338 @@
+# Instincts generated from https://github.com/Disseveru/dsa-connect
+# Generated: 2026-04-07T05:27:54.002Z
+# Version: 2.0
+# NOTE: This file supplements (does not replace) any existing curated instincts.
+# High-confidence manually curated instincts should be preserved alongside these.
+
+---
+id: dsa-connect-commit-conventional
+trigger: "when writing a commit message"
+confidence: 0.85
+domain: git
+source: repo-analysis
+source_repo: https://github.com/Disseveru/dsa-connect
+---
+
+# Dsa Connect Commit Conventional
+
+## Action
+
+Use conventional commit format with prefixes: feat, chore
+
+## Evidence
+
+- 2 commits analyzed
+- Detected conventional commit pattern
+- Examples: feat: add autonomous arbitrum mainnet DSA arbitrage app, chore: remove generated ts build info
+
+---
+id: dsa-connect-commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/Disseveru/dsa-connect
+---
+
+# Dsa Connect Commit Length
+
+## Action
+
+Keep commit messages concise (~46 characters)
+
+## Evidence
+
+- Average commit message length: 46 chars
+- Based on 2 commits
+
+---
+id: dsa-connect-naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/Disseveru/dsa-connect
+---
+
+# Dsa Connect Naming Files
+
+## Action
+
+Use camelCase naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: camelCase
+
+---
+id: dsa-connect-import-alias
+trigger: "when importing modules"
+confidence: 0.85
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/Disseveru/dsa-connect
+---
+
+# Dsa Connect Import Alias
+
+## Action
+
+Use path aliases (@/, ~/) instead of relative imports
+
+## Evidence
+
+- Import analysis shows alias pattern
+- Example: import { x } from '@/lib/x'
+
+---
+id: dsa-connect-export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/Disseveru/dsa-connect
+---
+
+# Dsa Connect Export Style
+
+## Action
+
+Prefer named exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: named
+
+---
+id: dsa-connect-instinct-camelcase-files
+trigger: "When creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: Disseveru/dsa-connect
+---
+
+# Dsa Connect Instinct Camelcase Files
+
+## Action
+
+Name the file using camelCase
+
+## Evidence
+
+- Pattern in codeStyle.namingConventions.files
+
+---
+id: dsa-connect-instinct-camelcase-functions
+trigger: "When defining a function"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: Disseveru/dsa-connect
+---
+
+# Dsa Connect Instinct Camelcase Functions
+
+## Action
+
+Name the function using camelCase
+
+## Evidence
+
+- Pattern in codeStyle.namingConventions.functions
+
+---
+id: dsa-connect-instinct-pascalcase-classes
+trigger: "When defining a class"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: Disseveru/dsa-connect
+---
+
+# Dsa Connect Instinct Pascalcase Classes
+
+## Action
+
+Name the class using PascalCase
+
+## Evidence
+
+- Pattern in codeStyle.namingConventions.classes
+
+---
+id: dsa-connect-instinct-screaming-constants
+trigger: "When declaring a constant"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: Disseveru/dsa-connect
+---
+
+# Dsa Connect Instinct Screaming Constants
+
+## Action
+
+Name the constant using SCREAMING_SNAKE_CASE
+
+## Evidence
+
+- Pattern in codeStyle.namingConventions.constants
+
+---
+id: dsa-connect-instinct-alias-imports
+trigger: "When importing modules"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: Disseveru/dsa-connect
+---
+
+# Dsa Connect Instinct Alias Imports
+
+## Action
+
+Use alias import style
+
+## Evidence
+
+- Pattern in codeStyle.importStyle
+
+---
+id: dsa-connect-instinct-named-exports
+trigger: "When exporting modules or functions"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: Disseveru/dsa-connect
+---
+
+# Dsa Connect Instinct Named Exports
+
+## Action
+
+Use named exports
+
+## Evidence
+
+- Pattern in codeStyle.exportStyle
+
+---
+id: dsa-connect-instinct-try-catch-errors
+trigger: "When handling errors in code"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: Disseveru/dsa-connect
+---
+
+# Dsa Connect Instinct Try Catch Errors
+
+## Action
+
+Use try-catch blocks for error handling
+
+## Evidence
+
+- Pattern in errorHandling.style
+
+---
+id: dsa-connect-instinct-no-custom-error-classes
+trigger: "When creating error handling logic"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: Disseveru/dsa-connect
+---
+
+# Dsa Connect Instinct No Custom Error Classes
+
+## Action
+
+Do not create custom error classes
+
+## Evidence
+
+- Pattern in errorHandling.customErrorClasses
+
+---
+id: dsa-connect-instinct-conventional-commits
+trigger: "When writing a commit message"
+confidence: 0.9
+domain: git
+source: repo-analysis
+source_repo: Disseveru/dsa-connect
+---
+
+# Dsa Connect Instinct Conventional Commits
+
+## Action
+
+Use conventional commit prefixes (e.g., 'feat', 'chore')
+
+## Evidence
+
+- Seen in commit: 'feat: add autonomous arbitrum mainnet DSA arbitrage app'
+- Seen in commit: 'chore: remove generated ts build info'
+- Pattern in commits.prefixes
+
+---
+id: dsa-connect-instinct-commit-length
+trigger: "When writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: Disseveru/dsa-connect
+---
+
+# Dsa Connect Instinct Commit Length
+
+## Action
+
+Keep the commit message concise (around 46 characters on average)
+
+## Evidence
+
+- Pattern in commits.averageLength
+
+---
+id: dsa-connect-instinct-typescript-tests
+trigger: "When writing tests"
+confidence: 0.7
+domain: testing
+source: repo-analysis
+source_repo: Disseveru/dsa-connect
+---
+
+# Dsa Connect Instinct Typescript Tests
+
+## Action
+
+Write tests in TypeScript
+
+## Evidence
+
+- Pattern in codeStyle.language
+- Presence of 'vitest.config.ts'
+
+---
+id: dsa-connect-instinct-mixed-test-location
+trigger: "When adding new tests"
+confidence: 0.6
+domain: testing
+source: repo-analysis
+source_repo: Disseveru/dsa-connect
+---
+
+# Dsa Connect Instinct Mixed Test Location
+
+## Action
+
+Place tests in mixed locations (not strictly separated from source code)
+
+## Evidence
+
+- Pattern in architecture.folderStructure.testLocation
+
