@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAuthenticatedWallet } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ensureMainnet } from "@/lib/state";
 
 export async function GET(request: NextRequest) {
   try {
     ensureMainnet();
-    const userWallet = request.nextUrl.searchParams.get("wallet");
-    if (!userWallet) return NextResponse.json({ error: "Missing user" }, { status: 400 });
+    const actingWallet = requireAuthenticatedWallet(request);
+    const requestedWallet = request.nextUrl.searchParams.get("wallet")?.toLowerCase();
+    if (requestedWallet && requestedWallet !== actingWallet) {
+      return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    }
 
     const user = await prisma.user.findUnique({
-      where: { wallet: userWallet.toLowerCase() },
+      where: { wallet: actingWallet },
       select: { id: true },
     });
     if (!user) return NextResponse.json({ ok: true, items: [] });
@@ -21,9 +25,10 @@ export async function GET(request: NextRequest) {
     });
     return NextResponse.json({ ok: true, items });
   } catch (error) {
+    const status = error instanceof Error && error.message === "Unauthorized" ? 401 : 500;
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to fetch executions" },
-      { status: 500 }
+      { status }
     );
   }
 }

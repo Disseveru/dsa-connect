@@ -36,6 +36,8 @@ Fill all values in `.env`:
 - `EXECUTOR_PRIVATE_KEY`
 - `EXECUTOR_ADDRESS`
 - `EXECUTOR_ENCRYPTION_KEY`
+- `AUTH_SESSION_SECRET` (at least 32 chars random secret for auth cookie signing)
+- `ADMIN_WALLETS` (comma-separated lowercased wallets allowed for global pause)
 - `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`
 
 ## 4) Initialize database

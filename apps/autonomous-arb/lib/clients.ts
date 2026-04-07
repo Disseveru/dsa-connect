@@ -15,8 +15,7 @@ const txRpcUrl = env.ARBITRUM_PRIVATE_TX_RPC_URL ?? env.ARBITRUM_RPC_URL;
 export const executorAccount = privateKeyToAccount(env.EXECUTOR_PRIVATE_KEY as `0x${string}`);
 
 if (executorAccount.address.toLowerCase() !== env.EXECUTOR_ADDRESS.toLowerCase()) {
-  // Keep build/runtime boot resilient; execution routes still expose this mismatch.
-  console.warn("EXECUTOR_ADDRESS does not match EXECUTOR_PRIVATE_KEY.");
+  throw new Error("EXECUTOR_ADDRESS must match EXECUTOR_PRIVATE_KEY.");
 }
 
 export const executorWalletClient = createWalletClient({

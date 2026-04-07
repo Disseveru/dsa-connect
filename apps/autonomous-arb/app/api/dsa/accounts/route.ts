@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createUserWithDefaults, parseWalletFromRequest, normalizeWalletSafe } from "@/lib/api";
+import { requireAuthenticatedWallet } from "@/lib/auth";
 import { createNodeDsa } from "@/lib/dsa-node";
 import { db } from "@/lib/db";
 import { getServerEnv } from "@/lib/env";
@@ -10,9 +11,12 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
-    const wallet = parseWalletFromRequest(req);
-    if (!wallet) return NextResponse.json({ accounts: [] });
-    const user = await createUserWithDefaults(wallet);
+    const actingWallet = requireAuthenticatedWallet(req);
+    const requestedWallet = parseWalletFromRequest(req);
+    if (requestedWallet && requestedWallet !== actingWallet) {
+      return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    }
+    const user = await createUserWithDefaults(actingWallet);
     const accounts = await db.dsaAccount.findMany({
       where: { userId: user.id },
       orderBy: { updatedAt: "desc" },
@@ -21,16 +25,20 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ accounts });
   } catch (error) {
     const message = error instanceof Error ? error.message : "unknown error";
-    return NextResponse.json({ error: message }, { status: 400 });
+    const status = message === "Unauthorized" ? 401 : 400;
+    return NextResponse.json({ error: message }, { status });
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
+    const actingWallet = requireAuthenticatedWallet(req);
     const json = (await req.json()) as { wallet?: string; dsaId?: number; dsaAddress?: string };
-    const wallet = normalizeWalletSafe(json.wallet) ?? parseWalletFromRequest(req);
-    if (!wallet) return NextResponse.json({ error: "wallet required" }, { status: 400 });
-    const user = await createUserWithDefaults(wallet);
+    const requestedWallet = normalizeWalletSafe(json.wallet) ?? parseWalletFromRequest(req);
+    if (requestedWallet && requestedWallet !== actingWallet) {
+      return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    }
+    const user = await createUserWithDefaults(actingWallet);
     const body = json;
 
     if (!body.dsaId && !body.dsaAddress) {
@@ -41,7 +49,7 @@ export async function POST(req: NextRequest) {
     let dsaAddress = body.dsaAddress?.toLowerCase();
     if (!dsaId || !dsaAddress) {
       const nodeDsa = createNodeDsa();
-      const accounts = (await nodeDsa.getAccounts?.(wallet)) ?? [];
+      const accounts = (await nodeDsa.getAccounts?.(actingWallet)) ?? [];
       const found = accounts.find(
         (a: { id: number; address: string }) =>
           (body.dsaId ? a.id === body.dsaId : false) ||
@@ -83,6 +91,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ account });
   } catch (error) {
     const message = error instanceof Error ? error.message : "unknown error";
-    return NextResponse.json({ error: message }, { status: 400 });
+    const status = message === "Unauthorized" ? 401 : 400;
+    return NextResponse.json({ error: message }, { status });
   }
 }

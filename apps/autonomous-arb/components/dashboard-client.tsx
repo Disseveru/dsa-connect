@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, useSignMessage } from "wagmi";
 import { ConnectWallet } from "@/components/connect-wallet";
 import { HealthBadge } from "@/components/health-badge";
 import { RiskDisclosure } from "@/components/risk-disclosure";
@@ -62,7 +62,9 @@ async function readJson<T>(url: string): Promise<T> {
 
 export function DashboardClient() {
   const { address } = useAccount();
+  const { signMessageAsync } = useSignMessage();
   const [wallet, setWallet] = useState<string>("");
+  const [authed, setAuthed] = useState(false);
   const [settings, setSettings] = useState<SettingsResponse | null>(null);
   const [opportunities, setOpportunities] = useState<OpportunityRow[]>([]);
   const [executions, setExecutions] = useState<ExecutionRow[]>([]);
@@ -70,18 +72,20 @@ export function DashboardClient() {
   const [dsaIdInput, setDsaIdInput] = useState("");
   const [message, setMessage] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [nonce, setNonce] = useState<string | null>(null);
 
   useEffect(() => {
     if (!address) return;
     setWallet(address.toLowerCase());
+    setAuthed(false);
   }, [address]);
 
   async function refreshAll(currentWallet: string) {
-    if (!currentWallet) return;
+    if (!currentWallet || !authed) return;
     const [settingsData, opportunitiesData, executionsData] = await Promise.all([
-      readJson<SettingsResponse>(`/api/settings?wallet=${currentWallet}`),
-      readJson<{ ok: boolean; items: OpportunityRow[] }>(`/api/opportunities?wallet=${currentWallet}`),
-      readJson<{ ok: boolean; items: ExecutionRow[] }>(`/api/executions?wallet=${currentWallet}`),
+      readJson<SettingsResponse>("/api/settings"),
+      readJson<{ ok: boolean; items: OpportunityRow[] }>("/api/opportunities"),
+      readJson<{ ok: boolean; items: ExecutionRow[] }>("/api/executions"),
     ]);
     setSettings(settingsData);
     setOpportunities(opportunitiesData.items);
@@ -89,22 +93,69 @@ export function DashboardClient() {
   }
 
   useEffect(() => {
-    if (!wallet) return;
+    if (!wallet || !authed) return;
     refreshAll(wallet).catch((error) => setMessage(error instanceof Error ? error.message : "Failed to load"));
     const timer = setInterval(() => {
       refreshAll(wallet).catch(() => undefined);
     }, 5000);
     return () => clearInterval(timer);
-  }, [wallet]);
+  }, [wallet, authed]);
+
+  async function authenticate() {
+    if (!wallet) return;
+    setLoading(true);
+    setMessage("");
+    try {
+      const challengeRes = await fetch("/api/auth/challenge", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ wallet }),
+      });
+      const challengeJson = await challengeRes.json();
+      if (!challengeRes.ok || !challengeJson.ok) throw new Error(challengeJson.error ?? "Challenge failed");
+      const challengeMessage = challengeJson.message as string;
+      const nextNonce = challengeJson.nonce as string;
+      const signature = await signMessageAsync({ message: challengeMessage });
+      const verifyRes = await fetch("/api/auth/verify", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ wallet, message: challengeMessage, signature, nonce: nextNonce }),
+      });
+      const verifyJson = await verifyRes.json();
+      if (!verifyRes.ok || !verifyJson.ok) throw new Error(verifyJson.error ?? "Verification failed");
+      setAuthed(true);
+      setNonce(nextNonce);
+      setMessage("Authenticated");
+      await refreshAll(wallet);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Authentication failed");
+      setAuthed(false);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function logout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    setAuthed(false);
+    setNonce(null);
+    setSettings(null);
+    setOpportunities([]);
+    setExecutions([]);
+  }
 
   async function submit(path: string, body: unknown) {
+    if (!authed) {
+      setMessage("Authenticate first.");
+      return;
+    }
     setLoading(true);
     setMessage("");
     try {
       const res = await fetch(path, {
         method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(body),
+        headers: { "content-type": "application/json", ...(nonce ? { "x-auth-nonce": nonce } : {}) },
+        body: JSON.stringify({ ...(body as Record<string, unknown>), nonce }),
       });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error ?? "Operation failed");
@@ -180,9 +231,35 @@ export function DashboardClient() {
           <HealthBadge />
         </div>
         <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-          <p className="text-sm text-slate-400">Global pause</p>
-          <p className="font-semibold">{settings?.globalPaused ? "ACTIVE" : "OFF"}</p>
+          <p className="text-sm text-slate-400">Session</p>
+          <div className="flex items-center gap-2">
+            <p className={`font-semibold ${authed ? "text-emerald-400" : "text-amber-300"}`}>
+              {authed ? "AUTHENTICATED" : "NOT AUTHENTICATED"}
+            </p>
+            {!authed ? (
+              <button
+                className="rounded-md bg-indigo-500 px-3 py-1 text-xs font-medium hover:bg-indigo-400"
+                onClick={authenticate}
+                disabled={loading}
+              >
+                Sign In
+              </button>
+            ) : (
+              <button
+                className="rounded-md bg-slate-700 px-3 py-1 text-xs font-medium hover:bg-slate-600"
+                onClick={logout}
+                disabled={loading}
+              >
+                Logout
+              </button>
+            )}
+          </div>
         </div>
+      </div>
+
+      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+        <p className="text-sm text-slate-400">Global pause</p>
+        <p className="font-semibold">{settings?.globalPaused ? "ACTIVE" : "OFF"}</p>
       </div>
 
       <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
@@ -190,7 +267,7 @@ export function DashboardClient() {
         <div className="flex flex-wrap gap-2">
           <button
             className="rounded-md bg-indigo-500 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-400"
-            onClick={() => submit("/api/dsa/create", { wallet })}
+            onClick={() => submit("/api/dsa/create", {})}
             disabled={loading}
           >
             Create DSA
@@ -209,7 +286,7 @@ export function DashboardClient() {
           />
           <button
             className="rounded-md bg-slate-700 px-4 py-2 text-sm font-medium hover:bg-slate-600"
-            onClick={() => submit("/api/dsa/accounts", { wallet, dsaId: Number(dsaIdInput), dsaAddress: dsaAddressInput })}
+            onClick={() => submit("/api/dsa/accounts", { dsaId: Number(dsaIdInput), dsaAddress: dsaAddressInput })}
             disabled={loading}
           >
             Import
@@ -236,14 +313,14 @@ export function DashboardClient() {
         <div className="flex gap-2">
           <button
             className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium hover:bg-emerald-500"
-            onClick={() => submit("/api/dsa/authority", { wallet, action: "enable" })}
+            onClick={() => submit("/api/dsa/authority", { action: "enable" })}
             disabled={loading}
           >
             Enable Autonomous Trading
           </button>
           <button
             className="rounded-md bg-rose-600 px-4 py-2 text-sm font-medium hover:bg-rose-500"
-            onClick={() => submit("/api/dsa/authority", { wallet, action: "revoke" })}
+            onClick={() => submit("/api/dsa/authority", { action: "revoke" })}
             disabled={loading}
           >
             Revoke Authority
@@ -308,7 +385,6 @@ export function DashboardClient() {
             disabled={loading}
             onClick={() =>
               submit("/api/settings", {
-                wallet,
                 ...form,
                 allowedPairs: form.allowedPairs
                   .split(",")

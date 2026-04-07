@@ -5,12 +5,13 @@ const serverSchema = z.object({
   DATABASE_URL: z.string().url().default("postgresql://postgres:postgres@localhost:5432/autonomous_arb"),
   ARBITRUM_RPC_URL: z.string().url().default("https://arb1.arbitrum.io/rpc"),
   ARBITRUM_PRIVATE_TX_RPC_URL: z.string().url().optional(),
-  EXECUTOR_PRIVATE_KEY: z
-    .string()
-    .regex(/^0x[a-fA-F0-9]{64}$/)
-    .default("0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce036f9e2aaf5be9a5f74d5"),
-  EXECUTOR_ADDRESS: z.string().regex(/^0x[a-fA-F0-9]{40}$/).default("0x90f8bf6a479f320ead074411a4b0e7944ea8c9c1"),
-  EXECUTOR_ENCRYPTION_KEY: z.string().min(32).default("change-me-to-32-bytes-minimum-key-material"),
+  EXECUTOR_PRIVATE_KEY: z.string().regex(/^0x[a-fA-F0-9]{64}$/),
+  EXECUTOR_ADDRESS: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
+  EXECUTOR_ENCRYPTION_KEY: z.string().min(32),
+  AUTH_SESSION_SECRET: z.string().min(32),
+  AUTH_CHALLENGE_TTL_SECONDS: z.coerce.number().int().positive().default(300),
+  AUTH_SESSION_TTL_SECONDS: z.coerce.number().int().positive().default(86400),
+  ADMIN_WALLETS: z.string().default(""),
   INSTAPOOL_ROUTE: z.coerce.number().int().nonnegative().default(5),
   FLASH_LOAN_FEE_BPS: z.coerce.number().nonnegative().default(9),
   MAX_JOB_RETRIES: z.coerce.number().int().positive().default(3),
@@ -35,7 +36,7 @@ const serverSchema = z.object({
 });
 
 const publicSchema = z.object({
-  NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: z.string().min(1).default("demo-project-id"),
+  NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: z.string().min(1),
   NEXT_PUBLIC_APP_NAME: z.string().default("Arbitrum Autonomous DSA Arb"),
   NEXT_PUBLIC_ARBITRUM_RPC_URL: z.string().url().default("https://arb1.arbitrum.io/rpc"),
 });

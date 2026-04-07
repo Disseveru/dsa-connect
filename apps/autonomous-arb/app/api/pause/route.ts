@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { requireAdminWallet, requireAuthenticatedWallet } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { jsonOk, parseJson, toJsonError } from "@/lib/api";
 import { z } from "zod";
@@ -12,9 +13,10 @@ const schema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const body = schema.parse(await parseJson(req));
-    const userAddress = req.nextUrl.searchParams.get("userAddress")?.toLowerCase();
+    const actingWallet = requireAuthenticatedWallet(req);
 
     if (body.globalPaused !== undefined) {
+      requireAdminWallet(req);
       await db.globalState.upsert({
         where: { id: 1 },
         update: { globalPaused: body.globalPaused, pauseReason: body.reason ?? null },
@@ -23,8 +25,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (body.strategyPaused !== undefined) {
-      if (!userAddress) return toJsonError("Missing userAddress for strategy pause", 400);
-      const user = await db.user.findUnique({ where: { wallet: userAddress } });
+      const user = await db.user.findUnique({ where: { wallet: actingWallet } });
       if (!user) return toJsonError("User not found", 404);
       await db.strategySettings.update({
         where: { userId: user.id },
@@ -34,6 +35,9 @@ export async function POST(req: NextRequest) {
 
     return jsonOk({ paused: true });
   } catch (error) {
-    return toJsonError(error instanceof Error ? error.message : "Pause update failed", 400);
+    const message = error instanceof Error ? error.message : "Pause update failed";
+    if (message === "Unauthorized") return toJsonError(message, 401);
+    if (message === "Forbidden") return toJsonError(message, 403);
+    return toJsonError(message, 400);
   }
 }

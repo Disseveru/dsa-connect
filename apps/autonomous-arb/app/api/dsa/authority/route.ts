@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { DSA_ACCOUNT_V2_ABI } from "@/lib/abis";
+import { requireAuthenticatedWallet } from "@/lib/auth";
 import { arbiscanTxUrl, ensureArbitrumMainnet } from "@/lib/chain";
 import { db } from "@/lib/db";
 import { createNodeDsaForAccount } from "@/lib/dsa-node";
@@ -22,12 +23,16 @@ async function getAccountOrThrow(wallet: string, dsaId?: number) {
 }
 
 export async function GET(req: NextRequest) {
-  const wallet = normalizeWallet(req.nextUrl.searchParams.get("wallet"));
-  const dsaIdParam = req.nextUrl.searchParams.get("dsaId");
-  const dsaId = dsaIdParam ? Number(dsaIdParam) : undefined;
-  if (!wallet) return NextResponse.json({ error: "wallet is required" }, { status: 400 });
-
   try {
+    const actingWallet = requireAuthenticatedWallet(req);
+    const requestedWallet = normalizeWallet(req.nextUrl.searchParams.get("wallet"));
+    if (requestedWallet && requestedWallet !== actingWallet) {
+      return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    }
+    const wallet = requestedWallet ?? actingWallet;
+    const dsaIdParam = req.nextUrl.searchParams.get("dsaId");
+    const dsaId = dsaIdParam ? Number(dsaIdParam) : undefined;
+
     ensureArbitrumMainnet(await publicClient.getChainId());
     const { account } = await getAccountOrThrow(wallet, dsaId);
     const isAuth = await publicClient.readContract({
@@ -47,22 +52,27 @@ export async function GET(req: NextRequest) {
     });
     return NextResponse.json({ authorityEnabled: Boolean(isAuth), executorAddress: env.EXECUTOR_ADDRESS });
   } catch (error) {
+    const status = error instanceof Error && error.message === "Unauthorized" ? 401 : 500;
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Authority status failed" },
-      { status: 500 }
+      { status }
     );
   }
 }
 
 export async function POST(req: NextRequest) {
-  const body = (await req.json()) as { wallet?: string; dsaId?: number; action?: "enable" | "revoke" };
-  const wallet = normalizeWallet(body.wallet);
-  if (!wallet || !body.action) {
-    return NextResponse.json({ error: "wallet and action are required" }, { status: 400 });
-  }
-
   try {
-    const { user, account } = await getAccountOrThrow(wallet, body.dsaId);
+    const body = (await req.json()) as { wallet?: string; dsaId?: number; action?: "enable" | "revoke" };
+    const actingWallet = requireAuthenticatedWallet(req);
+    const requestedWallet = normalizeWallet(body.wallet);
+    if (requestedWallet && requestedWallet !== actingWallet) {
+      return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    }
+    if (!body.action) {
+      return NextResponse.json({ error: "action is required" }, { status: 400 });
+    }
+
+    const { user, account } = await getAccountOrThrow(actingWallet, body.dsaId);
     const dsa = await createNodeDsaForAccount(account.dsaId);
     const spells = dsa.Spell();
     spells.add({
@@ -82,7 +92,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (body.action === "enable") {
-      await ensureUserAndSettings(wallet, {
+      await ensureUserAndSettings(actingWallet, {
         dsaId: account.dsaId,
         dsaAddress: account.address,
         version: account.version,
@@ -97,9 +107,10 @@ export async function POST(req: NextRequest) {
       userId: user.id,
     });
   } catch (error) {
+    const status = error instanceof Error && error.message === "Unauthorized" ? 401 : 500;
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Authority update failed" },
-      { status: 500 }
+      { status }
     );
   }
 }

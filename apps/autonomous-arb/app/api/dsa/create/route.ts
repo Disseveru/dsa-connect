@@ -1,32 +1,37 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { requireAuthenticatedWallet } from "@/lib/auth";
 import { createUserIfMissing, ensureMainnetRequest } from "@/lib/api";
 import { db } from "@/lib/db";
 import { DEFAULT_SETTINGS } from "@/lib/defaults";
 import { createNodeDsa } from "@/lib/dsa-node";
 
 const createSchema = z.object({
-  wallet: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
+  wallet: z.string().regex(/^0x[a-fA-F0-9]{40}$/).optional(),
   dsaId: z.coerce.number().int().positive().optional(),
   dsaAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/).optional(),
   version: z.coerce.number().int().positive().default(2),
 });
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const actingWallet = requireAuthenticatedWallet(req);
     const chainCheck = ensureMainnetRequest(req);
     if (!chainCheck.ok) return NextResponse.json({ error: chainCheck.error }, { status: 400 });
 
     const parsed = createSchema.safeParse(await req.json());
     if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    if (parsed.data.wallet && parsed.data.wallet.toLowerCase() !== actingWallet) {
+      return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    }
 
-    const user = await createUserIfMissing(parsed.data.wallet.toLowerCase());
+    const user = await createUserIfMissing(actingWallet);
     let dsaId = parsed.data.dsaId;
     let dsaAddress = parsed.data.dsaAddress?.toLowerCase();
 
     if (!dsaId || !dsaAddress) {
       const dsa = createNodeDsa();
-      const discovered = (await dsa.getAccounts?.(parsed.data.wallet)) ?? [];
+      const discovered = (await dsa.getAccounts?.(actingWallet)) ?? [];
       const latest = discovered[discovered.length - 1];
       if (!latest) {
         return NextResponse.json(
@@ -71,6 +76,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ account });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to create/import DSA";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const status = message === "Unauthorized" ? 401 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }
