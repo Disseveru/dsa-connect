@@ -33,7 +33,7 @@ const dsa = new DSA(web3);
 // ── Build the spell ──────────────────────────────────────────────────
 const spell = dsa.Spell();
 
-// 1. Flash-borrow 10 000 DAI (route 5 = Aave V3 flashloan pool)
+// 1. Flash-borrow 10 000 DAI (route 0 = default Instadapp flashloan pool)
 spell.add({
   connector: 'instapool_v2',
   method: 'flashBorrow',

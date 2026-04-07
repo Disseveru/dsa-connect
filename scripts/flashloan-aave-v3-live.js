@@ -187,16 +187,13 @@ async function main() {
 
   const finalBal = await web3.eth.getBalance(dsa.instance.address);
 
-  console.log('\n╔══════════════════════════════════════════════════════════╗');
-  console.log('║                       Summary                           ║');
-  console.log('╠══════════════════════════════════════════════════════════╣');
-  console.log(`║ DSA v2 #${myDSA.id} created and funded                       ║`);
-  console.log('║ ✓ Uniswap swap: 1 ETH → USDC (live)                    ║');
-  console.log('║ ✓ Flashloan: borrow/repay 10 USDC (live)               ║');
-  console.log('║ ✓ Aave V3 liquidation spell composed & encoded         ║');
-  console.log('║   (5 ops → 1 flashBorrowAndCast with 4 inner targets)  ║');
-  console.log(`║ Final DSA balance: ${web3.utils.fromWei(finalBal).padEnd(10)} ETH                     ║`);
-  console.log('╚══════════════════════════════════════════════════════════╝');
+  console.log('\n=== Results ===');
+  console.log(`DSA v2 #${myDSA.id} created and funded`);
+  console.log('✓ Uniswap swap: 1 ETH → USDC (live)');
+  console.log('✓ Flashloan: borrow/repay 10 USDC (live)');
+  console.log('✓ Aave V3 liquidation spell composed & encoded');
+  console.log('  (5 ops → 1 flashBorrowAndCast with 4 inner targets)');
+  console.log(`Final DSA balance: ${web3.utils.fromWei(finalBal)} ETH`);
 }
 
 main()
