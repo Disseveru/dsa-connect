@@ -7,7 +7,8 @@
  *   1. Creates a DSA v2 account
  *   2. Funds it with ETH
  *   3. Swaps ETH → USDC on Uniswap
- *   4. Executes a flashloan spell (borrow USDC → withdraw → repay)
+ *   4. Executes a minimal flashloan spell (borrow USDC → repay) as a template
+ *      showing where real strategy operations (arb, liquidation, etc.) go
  *
  * Part B (spell composition + ABI encoding):
  *   5. Composes a flashloan spell that liquidates an Aave V3 over-collateralised
@@ -76,9 +77,13 @@ async function main() {
   const swapTx = await swapSpell.cast({ from: account });
   console.log(`   ✓ Swap tx: ${swapTx}\n`);
 
-  // 4. Flashloan spell: borrow 10 USDC → withdraw to account → repay
+  // 4. Flashloan spell: borrow 10 USDC → repay
+  // The borrowed USDC lands in the DSA and is immediately repaid.  In a real
+  // strategy (e.g. arbitrage, liquidation) you would insert your operations
+  // between flashBorrow and flashPayback; here we keep it minimal so the spell
+  // executes successfully on a fork with no additional setup required.
   console.log('4. Executing flashloan spell...');
-  console.log('   Strategy: flash-borrow 10 USDC → withdraw 0 USDC → repay flash');
+  console.log('   Strategy: flash-borrow 10 USDC → repay flash (minimal cycle)');
   const flashSpell = dsa.Spell();
 
   flashSpell.add({
@@ -87,11 +92,7 @@ async function main() {
     args: [USDC, '10000000', 0],
   });
 
-  flashSpell.add({
-    connector: 'basic',
-    method: 'withdraw',
-    args: [USDC, 0, account, 0, 0],
-  });
+  // ↑ Insert your strategy operations here (e.g. swap, deposit, liquidate) ↑
 
   flashSpell.add({
     connector: 'instapool_v2',
@@ -168,7 +169,12 @@ async function main() {
     }
   });
 
-  const encodedData = String(converted.data[0].args[3]);
+  const flashBorrowAndCastOp = converted.data.find((op) => op.method === 'flashBorrowAndCast');
+  if (!flashBorrowAndCastOp) {
+    throw new Error('flashBorrowSpellsConvert() did not return a flashBorrowAndCast operation');
+  }
+
+  const encodedData = String(flashBorrowAndCastOp.args[3]);
   const decoded = web3.eth.abi.decodeParameters(['string[]', 'bytes[]'], encodedData);
   const targets = decoded[0];
   const spells  = decoded[1];
@@ -190,7 +196,7 @@ async function main() {
   console.log('\n=== Results ===');
   console.log(`DSA v2 #${myDSA.id} created and funded`);
   console.log('✓ Uniswap swap: 1 ETH → USDC (live)');
-  console.log('✓ Flashloan: borrow/repay 10 USDC (live)');
+  console.log('✓ Flashloan: borrow/repay 10 USDC (minimal cycle; insert strategy ops before repay)');
   console.log('✓ Aave V3 liquidation spell composed & encoded');
   console.log('  (5 ops → 1 flashBorrowAndCast with 4 inner targets)');
   console.log(`Final DSA balance: ${web3.utils.fromWei(finalBal)} ETH`);
