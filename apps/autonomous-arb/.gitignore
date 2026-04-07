@@ -4,3 +4,4 @@ coverage
 .env
 .env.local
 prisma/dev.db
+*.tsbuildinfo
