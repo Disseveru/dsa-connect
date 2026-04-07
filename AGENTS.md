@@ -21,6 +21,13 @@ This is **dsa-connect**, the official JavaScript/TypeScript SDK for Instadapp's 
 - To start the fork: `npm run ganache:fork` or `npm run hardhat:fork`. Both require the environment variables `ETH_NODE_URL` (an Infura/Alchemy mainnet RPC URL) and `PUBLIC_ADDRESS` (an Ethereum address to unlock) set in a `.env` file.
 - Without `ETH_NODE_URL`, you can still validate the codebase via `npm run build` and `npx tsc --noEmit`.
 - The `bignumber.js` unresolved dependency warning during build is expected and harmless (it's treated as external).
+- **Compound tests will fail** (`mint is paused`, `borrow is paused`) — Compound V2 has paused these operations on mainnet. These are 10 of 48 tests; the remaining 38 pass.
+- **Aave V1/V2/V3 deposit connectors may revert** depending on the fork block's protocol state (e.g., frozen reserves). Uniswap swaps, flashloans (INSTAPOOL), and basic deposit/withdraw connectors remain stable.
+- To run `test:dist` after `test`, you must rebuild (`npm run build`) and re-fork because ganache state is mutated by the first test run.
+
+### Running the forked node
+
+Start ganache in a separate terminal: `npm run ganache:fork`. Wait for the `Listening on 127.0.0.1:8545` message before running tests. The fork can take 5-15 seconds to initialise depending on the RPC provider's latency.
 
 ### Build outputs
 
