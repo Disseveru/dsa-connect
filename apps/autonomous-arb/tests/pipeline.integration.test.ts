@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildFlashLoanArbSpell } from "@/lib/dsa-node";
+import { buildFlashLoanArbSpell, buildFlashLoanLiquidationSpell } from "@/lib/dsa-node";
 import { MAINNET_CHAIN_ID, TOKENS } from "@/lib/chain";
 import type { ArbitrageOpportunity, StrategySettingsShape } from "@/lib/types";
 
@@ -9,10 +9,17 @@ const settings: StrategySettingsShape = {
   dsaAccountId: "d",
   enabled: true,
   strategyPaused: false,
+  strategyMode: "ARBITRAGE",
   minNetProfitUsd: 10,
   maxSlippageBps: 40,
   gasCeilingGwei: 1,
   maxPositionUsd: 500,
+  liquidationHealthFactor: 1.05,
+  liquidationDebtToken: null,
+  liquidationCollateralToken: null,
+  liquidationRepayAmount: null,
+  liquidationWithdrawAmount: null,
+  liquidationRateMode: 2,
   allowedPairs: [],
   cooldownSeconds: 0,
   dailyLossCapUsd: 100,
@@ -94,6 +101,26 @@ describe("scanner -> decision -> execution pipeline unit integration", () => {
     expect(dsa.__adds.length).toBe(1);
     expect(dsa.__adds[0].connector).toBe("INSTAPOOL-C");
     expect(dsa.__adds[0].method).toBe("flashBorrowAndCast");
+    expect(dsa.__innerAdds.some((s: any) => s.connector === "INSTAPOOL-C" && s.method === "flashPayback")).toBe(
+      true
+    );
+  });
+
+  it("builds flashBorrowAndCast payload for liquidation unwind", () => {
+    const dsa = createMockDsa() as unknown as any;
+    const flashSpell = buildFlashLoanLiquidationSpell(dsa, {
+      debtToken: TOKENS.USDC.address,
+      collateralToken: TOKENS.WETH.address,
+      repayAmountWei: 200_000000n,
+      withdrawAmountWei: 100000000000000000n,
+      rateMode: 2,
+      uniswapFeeTier: 500,
+    });
+    expect(flashSpell).toBeDefined();
+    expect(dsa.__adds.length).toBe(1);
+    expect(dsa.__adds[0].method).toBe("flashBorrowAndCast");
+    expect(dsa.__innerAdds.some((s: any) => s.connector === "AAVE-V3-A" && s.method === "payback")).toBe(true);
+    expect(dsa.__innerAdds.some((s: any) => s.connector === "AAVE-V3-A" && s.method === "withdraw")).toBe(true);
     expect(dsa.__innerAdds.some((s: any) => s.connector === "INSTAPOOL-C" && s.method === "flashPayback")).toBe(
       true
     );

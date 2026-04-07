@@ -136,6 +136,7 @@ export async function refreshOpportunities(): Promise<number> {
     where: {
       enabled: true,
       strategyPaused: false,
+      strategyMode: { in: ["ARBITRAGE", "HYBRID"] },
       dsaAccount: {
         authorityEnabled: true,
       },

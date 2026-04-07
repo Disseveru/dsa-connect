@@ -46,10 +46,23 @@ export async function getSettingsByUserWallet(wallet: string) {
       dsaAccountId: activeDsa.id,
       enabled: DEFAULT_SETTINGS.enabled,
       strategyPaused: DEFAULT_SETTINGS.strategyPaused,
+      strategyMode: DEFAULT_SETTINGS.strategyMode,
       minNetProfitUsd: new Prisma.Decimal(DEFAULT_SETTINGS.minNetProfitUsd),
       maxSlippageBps: DEFAULT_SETTINGS.maxSlippageBps,
       gasCeilingGwei: new Prisma.Decimal(DEFAULT_SETTINGS.gasCeilingGwei),
       maxPositionUsd: new Prisma.Decimal(DEFAULT_SETTINGS.maxPositionUsd),
+      liquidationHealthFactor: new Prisma.Decimal(DEFAULT_SETTINGS.liquidationHealthFactor),
+      liquidationDebtToken: DEFAULT_SETTINGS.liquidationDebtToken,
+      liquidationCollateralToken: DEFAULT_SETTINGS.liquidationCollateralToken,
+      liquidationRepayAmount:
+        DEFAULT_SETTINGS.liquidationRepayAmount != null
+          ? new Prisma.Decimal(DEFAULT_SETTINGS.liquidationRepayAmount)
+          : null,
+      liquidationWithdrawAmount:
+        DEFAULT_SETTINGS.liquidationWithdrawAmount != null
+          ? new Prisma.Decimal(DEFAULT_SETTINGS.liquidationWithdrawAmount)
+          : null,
+      liquidationRateMode: DEFAULT_SETTINGS.liquidationRateMode,
       allowedPairs: DEFAULT_SETTINGS.allowedPairs,
       cooldownSeconds: DEFAULT_SETTINGS.cooldownSeconds,
       dailyLossCapUsd: new Prisma.Decimal(DEFAULT_SETTINGS.dailyLossCapUsd),
@@ -114,10 +127,23 @@ export async function getOrCreateSettingsForDsa(userId: string, dsaAccountId: st
       dsaAccountId,
       enabled: DEFAULT_SETTINGS.enabled,
       strategyPaused: DEFAULT_SETTINGS.strategyPaused,
+      strategyMode: DEFAULT_SETTINGS.strategyMode,
       minNetProfitUsd: new Prisma.Decimal(DEFAULT_SETTINGS.minNetProfitUsd),
       maxSlippageBps: DEFAULT_SETTINGS.maxSlippageBps,
       gasCeilingGwei: new Prisma.Decimal(DEFAULT_SETTINGS.gasCeilingGwei),
       maxPositionUsd: new Prisma.Decimal(DEFAULT_SETTINGS.maxPositionUsd),
+      liquidationHealthFactor: new Prisma.Decimal(DEFAULT_SETTINGS.liquidationHealthFactor),
+      liquidationDebtToken: DEFAULT_SETTINGS.liquidationDebtToken,
+      liquidationCollateralToken: DEFAULT_SETTINGS.liquidationCollateralToken,
+      liquidationRepayAmount:
+        DEFAULT_SETTINGS.liquidationRepayAmount != null
+          ? new Prisma.Decimal(DEFAULT_SETTINGS.liquidationRepayAmount)
+          : null,
+      liquidationWithdrawAmount:
+        DEFAULT_SETTINGS.liquidationWithdrawAmount != null
+          ? new Prisma.Decimal(DEFAULT_SETTINGS.liquidationWithdrawAmount)
+          : null,
+      liquidationRateMode: DEFAULT_SETTINGS.liquidationRateMode,
       allowedPairs: DEFAULT_SETTINGS.allowedPairs,
       cooldownSeconds: DEFAULT_SETTINGS.cooldownSeconds,
       dailyLossCapUsd: new Prisma.Decimal(DEFAULT_SETTINGS.dailyLossCapUsd),

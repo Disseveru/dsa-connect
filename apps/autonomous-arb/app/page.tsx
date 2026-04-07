@@ -8,9 +8,9 @@ export default function LandingPage() {
     <main className="mx-auto max-w-6xl px-6 py-10">
       <header className="mb-12 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-white">Arbitrum Autonomous Flash-Loan Arbitrage</h1>
+          <h1 className="text-2xl font-semibold text-white">Arbitrum Autonomous Flash-Loan Arbitrage + Liquidation</h1>
           <p className="mt-2 text-sm text-slate-300">
-            Instadapp DSA authority delegation + autonomous executor service. Arbitrum mainnet only.
+            Instadapp DSA authority delegation + 24/7 autonomous executor for arbitrage and liquidation/deleverage flows.
           </p>
         </div>
         <HealthBadge />
@@ -22,7 +22,7 @@ export default function LandingPage() {
           <ol className="mt-4 list-decimal space-y-3 pl-5 text-sm text-slate-300">
             <li>Connect wallet and create/import your Arbitrum DSA.</li>
             <li>One-time authorize executor via AUTHORITY-A spell.</li>
-            <li>Configure risk settings and enable autonomous mode.</li>
+            <li>Configure arbitrage and/or liquidation mode, then enable autonomous execution.</li>
           </ol>
           <div className="mt-6 flex gap-3">
             <Link

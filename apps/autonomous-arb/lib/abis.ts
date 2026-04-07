@@ -105,3 +105,20 @@ export const DSA_ACCOUNT_V2_ABI = [
     outputs: [{ name: "", type: "bool" }],
   },
 ] as const;
+
+export const AAVE_V3_POOL_ABI = [
+  {
+    type: "function",
+    stateMutability: "view",
+    name: "getUserAccountData",
+    inputs: [{ name: "user", type: "address" }],
+    outputs: [
+      { name: "totalCollateralBase", type: "uint256" },
+      { name: "totalDebtBase", type: "uint256" },
+      { name: "availableBorrowsBase", type: "uint256" },
+      { name: "currentLiquidationThreshold", type: "uint256" },
+      { name: "ltv", type: "uint256" },
+      { name: "healthFactor", type: "uint256" },
+    ],
+  },
+] as const;

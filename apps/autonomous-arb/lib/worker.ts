@@ -1,7 +1,13 @@
 import { prisma } from "./db";
 import { getServerEnv } from "./env";
 import { logger } from "./logger";
-import { createExecutionRecord, executeOpportunity } from "./executor";
+import {
+  createExecutionRecord,
+  createLiquidationExecutionRecord,
+  executeLiquidationExecution,
+  executeOpportunity,
+} from "./executor";
+import { evaluateLiquidationReadiness } from "./liquidation";
 import { refreshOpportunities } from "./scanner";
 
 const env = getServerEnv();
@@ -77,6 +83,33 @@ export async function workerTick(): Promise<void> {
       routeBFeeBps: 30,
       estimatedGasUnits: 650000,
     });
+  }
+
+  const liquidationSettings = await prisma.strategySettings.findMany({
+    where: {
+      enabled: true,
+      strategyPaused: false,
+      strategyMode: { in: ["LIQUIDATION", "HYBRID"] },
+      dsaAccount: { authorityEnabled: true },
+    },
+    include: { dsaAccount: true },
+  });
+
+  for (const settings of liquidationSettings) {
+    if (settings.lastExecutedAt) {
+      const elapsedMs = Date.now() - settings.lastExecutedAt.getTime();
+      if (elapsedMs < settings.cooldownSeconds * 1000) continue;
+    }
+
+    const readiness = await evaluateLiquidationReadiness(settings, settings.dsaAccount.address as `0x${string}`);
+    if (!readiness.trigger || !readiness.config) continue;
+
+    const execution = await createLiquidationExecutionRecord(settings.userId, settings.id, {
+      borrowToken: readiness.config.debtToken,
+      borrowAmountWei: readiness.config.repayAmountWei,
+      routeDescription: `AAVE_V3_DELEVERAGE ${readiness.summary ?? ""} hf=${readiness.healthFactor.toFixed(4)}`,
+    });
+    await executeLiquidationExecution(settings.userId, settings.id, execution.id);
   }
 }
 

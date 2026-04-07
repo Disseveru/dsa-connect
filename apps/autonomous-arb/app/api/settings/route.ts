@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
+import { isAddress } from "viem";
 import { requireAuthenticatedWallet } from "@/lib/auth";
 import { getOrCreateUser, parseJsonBody } from "@/lib/api";
 import { DEFAULT_SETTINGS } from "@/lib/defaults";
@@ -32,9 +33,16 @@ export async function GET(request: NextRequest) {
       settings: latest
         ? {
             ...latest,
+            strategyMode: latest.strategyMode,
             minNetProfitUsd: latest.minNetProfitUsd.toString(),
             gasCeilingGwei: latest.gasCeilingGwei.toString(),
             maxPositionUsd: latest.maxPositionUsd.toString(),
+            liquidationHealthFactor: latest.liquidationHealthFactor.toString(),
+            liquidationDebtToken: latest.liquidationDebtToken,
+            liquidationCollateralToken: latest.liquidationCollateralToken,
+            liquidationRepayAmount: latest.liquidationRepayAmount?.toString() ?? null,
+            liquidationWithdrawAmount: latest.liquidationWithdrawAmount?.toString() ?? null,
+            liquidationRateMode: latest.liquidationRateMode,
             dailyLossCapUsd: latest.dailyLossCapUsd.toString(),
             dsaId: dsa?.dsaId ?? null,
             dsaAddress: dsa?.address ?? null,
@@ -54,10 +62,17 @@ type SettingsBody = {
   dsaId?: number;
   enabled?: boolean;
   strategyPaused?: boolean;
+  strategyMode?: "ARBITRAGE" | "LIQUIDATION" | "HYBRID";
   minNetProfitUsd?: number;
   maxSlippageBps?: number;
   gasCeilingGwei?: number;
   maxPositionUsd?: number;
+  liquidationHealthFactor?: number;
+  liquidationDebtToken?: string | null;
+  liquidationCollateralToken?: string | null;
+  liquidationRepayAmount?: number | null;
+  liquidationWithdrawAmount?: number | null;
+  liquidationRateMode?: number;
   allowedPairs?: string[];
   cooldownSeconds?: number;
   dailyLossCapUsd?: number;
@@ -86,11 +101,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "allowedPairs must include tokenA:tokenB entries" }, { status: 400 });
     }
 
+    const validModes = new Set(["ARBITRAGE", "LIQUIDATION", "HYBRID"]);
+    if (body.strategyMode && !validModes.has(body.strategyMode)) {
+      return NextResponse.json({ error: "strategyMode must be ARBITRAGE, LIQUIDATION, or HYBRID" }, { status: 400 });
+    }
+    if (body.liquidationDebtToken && !isAddress(body.liquidationDebtToken)) {
+      return NextResponse.json({ error: "liquidationDebtToken must be a valid address" }, { status: 400 });
+    }
+    if (body.liquidationCollateralToken && !isAddress(body.liquidationCollateralToken)) {
+      return NextResponse.json({ error: "liquidationCollateralToken must be a valid address" }, { status: 400 });
+    }
+
     const settings = await prisma.strategySettings.upsert({
       where: { dsaAccountId: dsa.id },
       update: {
         enabled: body.enabled ?? undefined,
         strategyPaused: body.strategyPaused ?? undefined,
+        strategyMode: body.strategyMode ?? undefined,
         minNetProfitUsd:
           body.minNetProfitUsd != null ? new Prisma.Decimal(body.minNetProfitUsd) : undefined,
         maxSlippageBps: body.maxSlippageBps ?? undefined,
@@ -98,6 +125,18 @@ export async function POST(request: NextRequest) {
           body.gasCeilingGwei != null ? new Prisma.Decimal(body.gasCeilingGwei) : undefined,
         maxPositionUsd:
           body.maxPositionUsd != null ? new Prisma.Decimal(body.maxPositionUsd) : undefined,
+        liquidationHealthFactor:
+          body.liquidationHealthFactor != null
+            ? new Prisma.Decimal(body.liquidationHealthFactor)
+            : undefined,
+        liquidationDebtToken: body.liquidationDebtToken != null ? body.liquidationDebtToken.toLowerCase() : undefined,
+        liquidationCollateralToken:
+          body.liquidationCollateralToken != null ? body.liquidationCollateralToken.toLowerCase() : undefined,
+        liquidationRepayAmount:
+          body.liquidationRepayAmount != null ? new Prisma.Decimal(body.liquidationRepayAmount) : undefined,
+        liquidationWithdrawAmount:
+          body.liquidationWithdrawAmount != null ? new Prisma.Decimal(body.liquidationWithdrawAmount) : undefined,
+        liquidationRateMode: body.liquidationRateMode ?? undefined,
         allowedPairs,
         cooldownSeconds: body.cooldownSeconds ?? undefined,
         dailyLossCapUsd:
@@ -112,10 +151,35 @@ export async function POST(request: NextRequest) {
         dsaAccountId: dsa.id,
         enabled: body.enabled ?? DEFAULT_SETTINGS.enabled,
         strategyPaused: body.strategyPaused ?? DEFAULT_SETTINGS.strategyPaused,
+        strategyMode: body.strategyMode ?? DEFAULT_SETTINGS.strategyMode,
         minNetProfitUsd: new Prisma.Decimal(body.minNetProfitUsd ?? DEFAULT_SETTINGS.minNetProfitUsd),
         maxSlippageBps: body.maxSlippageBps ?? DEFAULT_SETTINGS.maxSlippageBps,
         gasCeilingGwei: new Prisma.Decimal(body.gasCeilingGwei ?? DEFAULT_SETTINGS.gasCeilingGwei),
         maxPositionUsd: new Prisma.Decimal(body.maxPositionUsd ?? DEFAULT_SETTINGS.maxPositionUsd),
+        liquidationHealthFactor: new Prisma.Decimal(
+          body.liquidationHealthFactor ?? DEFAULT_SETTINGS.liquidationHealthFactor
+        ),
+        liquidationDebtToken:
+          body.liquidationDebtToken != null
+            ? body.liquidationDebtToken.toLowerCase()
+            : DEFAULT_SETTINGS.liquidationDebtToken,
+        liquidationCollateralToken:
+          body.liquidationCollateralToken != null
+            ? body.liquidationCollateralToken.toLowerCase()
+            : DEFAULT_SETTINGS.liquidationCollateralToken,
+        liquidationRepayAmount:
+          body.liquidationRepayAmount != null
+            ? new Prisma.Decimal(body.liquidationRepayAmount)
+            : DEFAULT_SETTINGS.liquidationRepayAmount != null
+              ? new Prisma.Decimal(DEFAULT_SETTINGS.liquidationRepayAmount)
+              : null,
+        liquidationWithdrawAmount:
+          body.liquidationWithdrawAmount != null
+            ? new Prisma.Decimal(body.liquidationWithdrawAmount)
+            : DEFAULT_SETTINGS.liquidationWithdrawAmount != null
+              ? new Prisma.Decimal(DEFAULT_SETTINGS.liquidationWithdrawAmount)
+              : null,
+        liquidationRateMode: body.liquidationRateMode ?? DEFAULT_SETTINGS.liquidationRateMode,
         allowedPairs,
         cooldownSeconds: body.cooldownSeconds ?? DEFAULT_SETTINGS.cooldownSeconds,
         dailyLossCapUsd: new Prisma.Decimal(body.dailyLossCapUsd ?? DEFAULT_SETTINGS.dailyLossCapUsd),

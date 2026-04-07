@@ -33,6 +33,11 @@ const serverSchema = z.object({
     .string()
     .regex(/^0x[a-fA-F0-9]{40}$/)
     .default("0xc35DADB65012eC5796536bD9864eD8773aBc74C4"),
+  AAVE_V3_POOL: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/)
+    .default("0x794a61358D6845594F94dc1DB02A252b5b4814aD"),
+  LIQUIDATION_UNISWAP_FEE_TIER: z.coerce.number().int().positive().default(500),
 });
 
 const publicSchema = z.object({
