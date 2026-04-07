@@ -21,7 +21,13 @@ function parseCookies(cookieHeader: string): Record<string, string> {
   for (const part of cookieHeader.split(";")) {
     const [rawKey, ...rest] = part.trim().split("=");
     if (!rawKey || !rest.length) continue;
-    out[rawKey] = decodeURIComponent(rest.join("="));
+    const rawValue = rest.join("=");
+    try {
+      out[rawKey] = decodeURIComponent(rawValue);
+    } catch {
+      // Ignore malformed cookie values and treat them as absent.
+      continue;
+    }
   }
   return out;
 }
@@ -41,6 +47,7 @@ function decode(token: string): AuthPayload | null {
   const [body, sig] = token.split(".");
   if (!body || !sig) return null;
   const expected = sign(body);
+  if (sig.length !== expected.length) return null;
   if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
   try {
     const payload = JSON.parse(Buffer.from(body, "base64url").toString("utf8")) as AuthPayload;
