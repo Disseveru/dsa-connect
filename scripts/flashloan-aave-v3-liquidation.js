@@ -8,17 +8,18 @@
  *   4. Swaps enough WETH → DAI on Uniswap V2 to cover the flashloan repayment
  *   5. Repays the flashloan
  *
- * Because there is no live Ethereum node in this environment, we validate that
- * the SDK correctly composes, encodes, and transforms the spell (including
- * automatic flashBorrow/flashPayback → flashBorrowAndCast conversion).
+ * This script requires an Ethereum RPC endpoint because the DSA SDK resolves
+ * the active chain during construction. Point WEB3_PROVIDER_URL at a local
+ * fork/node, or rely on the default localhost fork at http://127.0.0.1:8545.
  *
- * Usage:  node scripts/flashloan-aave-v3-liquidation.js
+ * Usage:  WEB3_PROVIDER_URL=http://127.0.0.1:8545 node scripts/flashloan-aave-v3-liquidation.js
  */
 
 const DSA = require('../dist/index.js');
 const Web3 = require('web3');
 
-const web3 = new Web3();
+const providerUrl = process.env.WEB3_PROVIDER_URL || 'http://127.0.0.1:8545';
+const web3 = new Web3(providerUrl);
 
 const WETH  = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2';
 const DAI   = '0x6B175474E89094C44Da98b954EedeAC495271d0F';
