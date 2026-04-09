@@ -3,6 +3,7 @@ import { arbiscanTxUrl } from "./chain";
 import { buildFlashLoanArbSpell, createNodeDsaForAccount, estimateDsaCastGas } from "./dsa-node";
 import { logger } from "./logger";
 import { enforceRisk } from "./risk";
+import { buildFlashLoanLiquidationSpell, evaluateLiquidationReadiness } from "./liquidation";
 import type { ArbitrageOpportunity, StrategySettingsShape } from "./types";
 
 function toFixedDecimalString(n: number): string {
@@ -12,7 +13,7 @@ function toFixedDecimalString(n: number): string {
 type FailureCtx = {
   settingsId: string;
   executionId: string;
-  opportunityId: string;
+  opportunityId?: string;
   reason: string;
   hardStop?: boolean;
 };
@@ -23,10 +24,12 @@ async function markFailure(ctx: FailureCtx) {
       where: { id: ctx.executionId },
       data: { status: "failed", failureReason: ctx.reason },
     });
-    await tx.opportunity.update({
-      where: { id: ctx.opportunityId },
-      data: { executable: false },
-    });
+    if (ctx.opportunityId) {
+      await tx.opportunity.update({
+        where: { id: ctx.opportunityId },
+        data: { executable: false },
+      });
+    }
     await tx.strategySettings.update({
       where: { id: ctx.settingsId },
       data: {
@@ -171,4 +174,122 @@ export async function createExecutionRecord(
     select: { id: true },
   });
   return execution;
+}
+
+export async function createLiquidationExecutionRecord(
+  userId: string,
+  settingsId: string,
+  input: { borrowToken: `0x${string}`; borrowAmountWei: bigint; routeDescription: string }
+): Promise<{ id: string }> {
+  const idempotencyKey = `liq-${settingsId}-${Date.now()}`;
+  const execution = await db.execution.create({
+    data: {
+      userId,
+      settingsId,
+      status: "pending",
+      idempotencyKey,
+      borrowToken: input.borrowToken.toLowerCase(),
+      borrowAmountWei: input.borrowAmountWei.toString(),
+      estimatedNetUsd: "0.000000",
+      routeDescription: input.routeDescription,
+    },
+    select: { id: true },
+  });
+  return execution;
+}
+
+export async function executeLiquidationExecution(
+  userId: string,
+  settingsId: string,
+  executionId: string
+): Promise<void> {
+  const settings = await db.strategySettings.findUnique({ where: { id: settingsId } });
+
+  if (!settings) {
+    await markFailure({
+      settingsId,
+      executionId,
+      reason: "Missing settings or authorized DSA account.",
+      hardStop: true,
+    });
+    return;
+  }
+
+  const dsaAccount = await db.dsaAccount.findFirst({
+    where: {
+      id: settings.dsaAccountId,
+      userId,
+      authorityEnabled: true,
+    },
+  });
+
+  if (!dsaAccount) {
+    await markFailure({
+      settingsId,
+      executionId,
+      reason: "Missing settings or authorized DSA account.",
+      hardStop: true,
+    });
+    return;
+  }
+  if (!settings.enabled || settings.strategyPaused) {
+    await db.execution.update({
+      where: { id: executionId },
+      data: { status: "skipped", failureReason: "Strategy disabled or paused." },
+    });
+    return;
+  }
+
+  const readiness = await evaluateLiquidationReadiness(settings, dsaAccount.address as `0x${string}`);
+  if (!readiness.trigger || !readiness.config) {
+    await db.execution.update({
+      where: { id: executionId },
+      data: {
+        status: "skipped",
+        failureReason: readiness.reason ?? `Health factor ${readiness.healthFactor.toFixed(4)} above trigger.`,
+      },
+    });
+    return;
+  }
+
+  try {
+    const dsa = await createNodeDsaForAccount(dsaAccount.dsaId);
+    const spells = buildFlashLoanLiquidationSpell(dsa, readiness.config);
+    const gasEstimate = await estimateDsaCastGas(dsa, spells);
+    if (gasEstimate > 1_500_000) {
+      await markFailure({
+        settingsId,
+        executionId,
+        reason: `Estimated gas too high: ${gasEstimate}`,
+      });
+      return;
+    }
+
+    const txHash = await spells.cast();
+    await db.$transaction(async (tx) => {
+      await tx.execution.update({
+        where: { id: executionId },
+        data: {
+          status: "submitted",
+          txHash,
+          arbiscanUrl: arbiscanTxUrl(txHash),
+        },
+      });
+      await tx.strategySettings.update({
+        where: { id: settingsId },
+        data: {
+          lastExecutedAt: new Date(),
+          consecutiveFailures: 0,
+        },
+      });
+    });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "Liquidation execution failed";
+    logger.error({ reason, executionId }, "liquidation execution failed");
+    await markFailure({
+      settingsId,
+      executionId,
+      reason,
+    });
+  }
 }

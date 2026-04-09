@@ -1,6 +1,6 @@
-# Autonomous Arbitrum Mainnet Flash-Loan Arbitrage (Instadapp DSA)
+# Autonomous Arbitrum Mainnet Flash-Loan Arbitrage + Liquidation (Instadapp DSA)
 
-Production-focused, **Arbitrum mainnet only** autonomous arbitrage stack:
+Production-focused, **Arbitrum mainnet only** autonomous arbitrage + liquidation stack:
 
 - Next.js App Router dashboard (wallet onboarding, DSA management, one-time authority enable/revoke)
 - Node worker service for scanning + risk-gating + execution
@@ -39,6 +39,8 @@ Fill all values in `.env`:
 - `AUTH_SESSION_SECRET` (at least 32 chars random secret for auth cookie signing)
 - `ADMIN_WALLETS` (comma-separated lowercased wallets allowed for global pause)
 - `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`
+- `AAVE_V3_POOL`
+- `LIQUIDATION_UNISWAP_FEE_TIER`
 
 ## 4) Initialize database
 
@@ -82,7 +84,7 @@ npm test
 5. Sign one transaction from your wallet:
    - DSA `AUTHORITY-A.add(EXECUTOR_ADDRESS)`.
 6. Confirm authority status is enabled.
-7. Configure strategy settings and set strategy enabled.
+7. Configure strategy mode (`ARBITRAGE`, `LIQUIDATION`, or `HYBRID`) and set strategy enabled.
 
 After that, the backend worker executes trades through delegated authority without asking for per-trade wallet signatures.
 
@@ -110,6 +112,9 @@ After that, the backend worker executes trades through delegated authority witho
    - max slippage
    - gas ceiling
    - max position size
+   - strategy mode (arb/liquidation/hybrid)
+   - liquidation trigger health factor
+   - liquidation debt/collateral token and amounts
    - allowed pairs
    - cooldown
    - daily loss cap

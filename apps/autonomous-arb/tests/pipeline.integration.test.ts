@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildFlashLoanArbSpell } from "@/lib/dsa-node";
+import { buildFlashLoanArbSpell, buildFlashLoanLiquidationSpell } from "@/lib/dsa-node";
 import { MAINNET_CHAIN_ID, TOKENS } from "@/lib/chain";
 import type { ArbitrageOpportunity, StrategySettingsShape } from "@/lib/types";
 
@@ -9,10 +9,17 @@ const settings: StrategySettingsShape = {
   dsaAccountId: "d",
   enabled: true,
   strategyPaused: false,
+  strategyMode: "ARBITRAGE",
   minNetProfitUsd: 10,
   maxSlippageBps: 40,
   gasCeilingGwei: 1,
   maxPositionUsd: 500,
+  liquidationHealthFactor: 1.05,
+  liquidationDebtToken: null,
+  liquidationCollateralToken: null,
+  liquidationRepayAmount: null,
+  liquidationWithdrawAmount: null,
+  liquidationRateMode: 2,
   allowedPairs: [],
   cooldownSeconds: 0,
   dailyLossCapUsd: 100,
@@ -97,5 +104,37 @@ describe("scanner -> decision -> execution pipeline unit integration", () => {
     expect(dsa.__innerAdds.some((s: any) => s.connector === "INSTAPOOL-C" && s.method === "flashPayback")).toBe(
       true
     );
+  });
+
+  it("builds flashBorrowAndCast payload for liquidation unwind", () => {
+    const dsa = createMockDsa() as unknown as any;
+    const liquidationParams = {
+      debtToken: TOKENS.USDC.address,
+      collateralToken: TOKENS.WETH.address,
+      repayAmountWei: 200_000000n,
+      withdrawAmountWei: 100000000000000000n,
+      rateMode: 2,
+      uniswapFeeTier: 500,
+      maxSlippageBps: 40,
+    };
+    const flashSpell = buildFlashLoanLiquidationSpell(dsa, liquidationParams);
+    expect(flashSpell).toBeDefined();
+    expect(dsa.__adds.length).toBe(1);
+    expect(dsa.__adds[0].method).toBe("flashBorrowAndCast");
+    expect(dsa.__innerAdds.some((s: any) => s.connector === "AAVE-V3-A" && s.method === "payback")).toBe(true);
+    expect(dsa.__innerAdds.some((s: any) => s.connector === "AAVE-V3-A" && s.method === "withdraw")).toBe(true);
+    expect(dsa.__innerAdds.some((s: any) => s.connector === "INSTAPOOL-C" && s.method === "flashPayback")).toBe(
+      true
+    );
+    // Assert Uniswap sell: sell(buyAddr=debtToken, sellAddr=collateralToken, fee, unitAmt, sellAmt, 0, 0)
+    const uniswapSell = dsa.__innerAdds.find(
+      (s: any) => s.connector === "UNISWAP-V3-SWAP-A" && s.method === "sell"
+    );
+    expect(uniswapSell).toBeDefined();
+    expect(uniswapSell.args[0]).toBe(liquidationParams.debtToken);      // buyAddr: token to receive
+    expect(uniswapSell.args[1]).toBe(liquidationParams.collateralToken); // sellAddr: token to sell
+    expect(uniswapSell.args[2]).toBe(liquidationParams.uniswapFeeTier); // fee
+    expect(BigInt(uniswapSell.args[3])).toBeGreaterThan(0n);             // unitAmt: slippage floor
+    expect(uniswapSell.args[4]).toBe(liquidationParams.withdrawAmountWei.toString()); // sellAmt
   });
 });

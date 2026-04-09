@@ -139,6 +139,70 @@ export function buildFlashLoanArbSpell(dsa: DsaLike, opportunity: ArbitrageOppor
   return flashSpell;
 }
 
+export type FlashLoanLiquidationConfig = {
+  debtToken: `0x${string}`;
+  collateralToken: `0x${string}`;
+  repayAmountWei: bigint;
+  withdrawAmountWei: bigint;
+  rateMode: number;
+  uniswapFeeTier: number;
+  maxSlippageBps: number;
+};
+
+export function buildFlashLoanLiquidationSpell(dsa: DsaLike, config: FlashLoanLiquidationConfig) {
+  const routeSpells = dsa.Spell();
+  routeSpells.add({
+    connector: "AAVE-V3-A",
+    method: "payback",
+    args: [config.debtToken, config.repayAmountWei.toString(), config.rateMode, 0, 0],
+  });
+  routeSpells.add({
+    connector: "AAVE-V3-A",
+    method: "withdraw",
+    args: [config.collateralToken, config.withdrawAmountWei.toString(), 0, 0],
+  });
+  routeSpells.add({
+    connector: "UNISWAP-V3-SWAP-A",
+    method: "sell",
+    args: [
+      config.debtToken,
+      config.collateralToken,
+      config.uniswapFeeTier,
+      // unitAmt: minimum debtToken per 1e18 wei of collateralToken sold, with slippage applied
+      (
+        (config.repayAmountWei * BigInt(10000 - config.maxSlippageBps) * (10n ** 18n)) /
+        (config.withdrawAmountWei * 10000n)
+      ).toString(),
+      config.withdrawAmountWei.toString(),
+      0,
+      0,
+    ],
+  });
+  routeSpells.add({
+    connector: "INSTAPOOL-C",
+    method: "flashPayback",
+    args: [config.debtToken, config.repayAmountWei.toString(), 0, 0],
+  });
+
+  const encoded = dsa.internal?.encodeSpells?.(
+    routeSpells,
+    dsa.instance?.version ?? 2,
+    dsa.instance?.chainId ?? MAINNET_CHAIN_ID
+  );
+  const encodedData =
+    encoded && dsa.web3?.eth?.abi?.encodeParameters
+      ? dsa.web3.eth.abi.encodeParameters(["string[]", "bytes[]"], [encoded.targets, encoded.spells])
+      : "0x";
+
+  const flashSpell = dsa.Spell();
+  flashSpell.add({
+    connector: "INSTAPOOL-C",
+    method: "flashBorrowAndCast",
+    args: [config.debtToken, config.repayAmountWei.toString(), env.INSTAPOOL_ROUTE, encodedData, "0x"],
+  });
+  return flashSpell;
+}
+
 export async function executeSpellWithRetries(spells: { cast: (params?: { nonce?: number }) => Promise<string> }) {
   const retries = getServerEnv().MAX_JOB_RETRIES;
   let attempt = 0;

@@ -12,10 +12,17 @@ type SettingsResponse = {
   settings: {
     enabled: boolean;
     strategyPaused: boolean;
+    strategyMode: "ARBITRAGE" | "LIQUIDATION" | "HYBRID";
     minNetProfitUsd: string;
     maxSlippageBps: number;
     gasCeilingGwei: string;
     maxPositionUsd: string;
+    liquidationHealthFactor: string;
+    liquidationDebtToken: string | null;
+    liquidationCollateralToken: string | null;
+    liquidationRepayAmount: string | null;
+    liquidationWithdrawAmount: string | null;
+    liquidationRateMode: number;
     allowedPairs: string[];
     cooldownSeconds: number;
     dailyLossCapUsd: string;
@@ -63,6 +70,15 @@ async function readJson<T>(url: string): Promise<T> {
 export function DashboardClient() {
   const { address } = useAccount();
   const { signMessageAsync } = useSignMessage();
+  const supportedTokens = useMemo(
+    () => [
+      { symbol: "USDC", address: "0xaf88d065e77c8cc2239327c5edb3a432268e5831" },
+      { symbol: "USDT", address: "0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9" },
+      { symbol: "DAI", address: "0xda10009cbd5d07dd0cecc66161fc93d7c9000da1" },
+      { symbol: "WETH", address: "0x82af49447d8a07e3bd95bd0d56f35241523fbab1" },
+    ],
+    []
+  );
   const [wallet, setWallet] = useState<string>("");
   const [authed, setAuthed] = useState(false);
   const [settings, setSettings] = useState<SettingsResponse | null>(null);
@@ -169,15 +185,22 @@ export function DashboardClient() {
   }
 
   const defaultAllowedPairs = useMemo(
-    () => settings?.settings?.allowedPairs?.join(",") ?? "0xaf88d065e77c8cC2239327C5EDb3A432268e583:0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+    () => settings?.settings?.allowedPairs?.join(",") ?? "0xaf88d065e77c8cc2239327c5edb3a432268e5831:0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
     [settings]
   );
 
   const [form, setForm] = useState({
+    strategyMode: "ARBITRAGE" as "ARBITRAGE" | "LIQUIDATION" | "HYBRID",
     minNetProfitUsd: "10",
     maxSlippageBps: "40",
     gasCeilingGwei: "0.2",
     maxPositionUsd: "500",
+    liquidationHealthFactor: "1.05",
+    liquidationDebtToken: "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+    liquidationCollateralToken: "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+    liquidationRepayAmount: "500",
+    liquidationWithdrawAmount: "0.25",
+    liquidationRateMode: "2",
     allowedPairs: defaultAllowedPairs,
     cooldownSeconds: "60",
     dailyLossCapUsd: "100",
@@ -191,10 +214,17 @@ export function DashboardClient() {
   useEffect(() => {
     if (!settings?.settings) return;
     setForm({
+      strategyMode: settings.settings.strategyMode,
       minNetProfitUsd: settings.settings.minNetProfitUsd,
       maxSlippageBps: String(settings.settings.maxSlippageBps),
       gasCeilingGwei: settings.settings.gasCeilingGwei,
       maxPositionUsd: settings.settings.maxPositionUsd,
+      liquidationHealthFactor: settings.settings.liquidationHealthFactor,
+      liquidationDebtToken: settings.settings.liquidationDebtToken ?? "",
+      liquidationCollateralToken: settings.settings.liquidationCollateralToken ?? "",
+      liquidationRepayAmount: settings.settings.liquidationRepayAmount ?? "",
+      liquidationWithdrawAmount: settings.settings.liquidationWithdrawAmount ?? "",
+      liquidationRateMode: String(settings.settings.liquidationRateMode ?? 2),
       allowedPairs: settings.settings.allowedPairs.join(","),
       cooldownSeconds: String(settings.settings.cooldownSeconds),
       dailyLossCapUsd: settings.settings.dailyLossCapUsd,
@@ -330,6 +360,18 @@ export function DashboardClient() {
 
       <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
         <h3 className="mb-3 text-lg font-semibold">Autonomous Settings</h3>
+        <label className="mb-3 block text-sm">
+          <span className="mb-1 block text-slate-400">Strategy mode</span>
+          <select
+            className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
+            value={form.strategyMode}
+            onChange={(e) => setForm((prev) => ({ ...prev, strategyMode: e.target.value as typeof form.strategyMode }))}
+          >
+            <option value="ARBITRAGE">Arbitrage only</option>
+            <option value="LIQUIDATION">Liquidation / deleverage only</option>
+            <option value="HYBRID">Hybrid (both)</option>
+          </select>
+        </label>
         <div className="grid gap-3 md:grid-cols-3">
           {[
             ["Min net profit (USD)", "minNetProfitUsd"],
@@ -379,6 +421,73 @@ export function DashboardClient() {
             Strategy paused
           </label>
         </div>
+        <div className="mt-4 rounded-lg border border-slate-700/80 bg-slate-950/40 p-3">
+          <h4 className="mb-2 text-sm font-semibold text-slate-200">Liquidation / Deleverage Trigger</h4>
+          <div className="grid gap-3 md:grid-cols-3">
+            <label className="text-sm">
+              <span className="mb-1 block text-slate-400">Trigger health factor (Aave V3)</span>
+              <input
+                className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
+                value={form.liquidationHealthFactor}
+                onChange={(e) => setForm((prev) => ({ ...prev, liquidationHealthFactor: e.target.value }))}
+              />
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block text-slate-400">Debt token</span>
+              <select
+                className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
+                value={form.liquidationDebtToken}
+                onChange={(e) => setForm((prev) => ({ ...prev, liquidationDebtToken: e.target.value }))}
+              >
+                <option value="">Select debt token</option>
+                {supportedTokens.map((token) => (
+                  <option key={`debt-${token.address}`} value={token.address}>
+                    {token.symbol}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block text-slate-400">Collateral token</span>
+              <select
+                className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
+                value={form.liquidationCollateralToken}
+                onChange={(e) => setForm((prev) => ({ ...prev, liquidationCollateralToken: e.target.value }))}
+              >
+                <option value="">Select collateral token</option>
+                {supportedTokens.map((token) => (
+                  <option key={`collat-${token.address}`} value={token.address}>
+                    {token.symbol}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block text-slate-400">Repay amount (token units)</span>
+              <input
+                className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
+                value={form.liquidationRepayAmount}
+                onChange={(e) => setForm((prev) => ({ ...prev, liquidationRepayAmount: e.target.value }))}
+              />
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block text-slate-400">Withdraw amount (token units)</span>
+              <input
+                className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
+                value={form.liquidationWithdrawAmount}
+                onChange={(e) => setForm((prev) => ({ ...prev, liquidationWithdrawAmount: e.target.value }))}
+              />
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block text-slate-400">Aave rate mode (1 stable, 2 variable)</span>
+              <input
+                className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
+                value={form.liquidationRateMode}
+                onChange={(e) => setForm((prev) => ({ ...prev, liquidationRateMode: e.target.value }))}
+              />
+            </label>
+          </div>
+        </div>
         <div className="mt-4 flex gap-2">
           <button
             className="rounded-md bg-indigo-500 px-4 py-2 text-sm font-medium hover:bg-indigo-400"
@@ -390,6 +499,16 @@ export function DashboardClient() {
                   .split(",")
                   .map((s) => s.trim())
                   .filter(Boolean),
+                liquidationDebtToken: form.liquidationDebtToken || null,
+                liquidationCollateralToken: form.liquidationCollateralToken || null,
+                liquidationRepayAmount: form.liquidationRepayAmount
+                  ? Number(form.liquidationRepayAmount)
+                  : null,
+                liquidationWithdrawAmount: form.liquidationWithdrawAmount
+                  ? Number(form.liquidationWithdrawAmount)
+                  : null,
+                liquidationRateMode: Number(form.liquidationRateMode || 2),
+                liquidationHealthFactor: Number(form.liquidationHealthFactor || 1.05),
               })
             }
           >

@@ -54,16 +54,25 @@ export type AllowedPairInput = {
   midToken: string;
 };
 
+export type StrategyMode = "ARBITRAGE" | "LIQUIDATION" | "HYBRID";
+
 export type StrategySettingsShape = {
   id: string;
   userId?: string;
   dsaAccountId?: string;
   enabled: boolean;
   strategyPaused: boolean;
+  strategyMode: StrategyMode;
   minNetProfitUsd: number;
   maxSlippageBps: number;
   gasCeilingGwei: number;
   maxPositionUsd: number;
+  liquidationHealthFactor: number;
+  liquidationDebtToken: `0x${string}` | null;
+  liquidationCollateralToken: `0x${string}` | null;
+  liquidationRepayAmount: number | null;
+  liquidationWithdrawAmount: number | null;
+  liquidationRateMode: number;
   allowedPairs: string[];
   cooldownSeconds: number;
   dailyLossCapUsd: number;
