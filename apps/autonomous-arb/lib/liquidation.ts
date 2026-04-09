@@ -14,11 +14,6 @@ type LiquidationReadiness = {
   summary?: string;
 };
 
-function toNumber(value: unknown): number {
-  if (value == null) return 0;
-  return Number(value);
-}
-
 function buildConfigFromSettings(settings: StrategySettings): {
   config?: FlashLoanLiquidationConfig;
   summary?: string;
@@ -30,8 +25,10 @@ function buildConfigFromSettings(settings: StrategySettings): {
   if (!isAddress(settings.liquidationDebtToken) || !isAddress(settings.liquidationCollateralToken)) {
     return { reason: "Liquidation token addresses are invalid." };
   }
-  const repayAmount = toNumber(settings.liquidationRepayAmount);
-  const withdrawAmount = toNumber(settings.liquidationWithdrawAmount);
+  const repayAmountStr = settings.liquidationRepayAmount?.toString() ?? "0";
+  const withdrawAmountStr = settings.liquidationWithdrawAmount?.toString() ?? "0";
+  const repayAmount = Number(repayAmountStr);
+  const withdrawAmount = Number(withdrawAmountStr);
   if (repayAmount <= 0 || withdrawAmount <= 0) {
     return { reason: "Liquidation repay/withdraw amounts must be greater than zero." };
   }
@@ -48,10 +45,11 @@ function buildConfigFromSettings(settings: StrategySettings): {
   const config: FlashLoanLiquidationConfig = {
     debtToken: debtToken.address,
     collateralToken: collateralToken.address,
-    repayAmountWei: parseUnits(repayAmount.toString(), debtToken.decimals),
-    withdrawAmountWei: parseUnits(withdrawAmount.toString(), collateralToken.decimals),
+    repayAmountWei: parseUnits(repayAmountStr, debtToken.decimals),
+    withdrawAmountWei: parseUnits(withdrawAmountStr, collateralToken.decimals),
     rateMode: settings.liquidationRateMode,
     uniswapFeeTier: getServerEnv().LIQUIDATION_UNISWAP_FEE_TIER,
+    maxSlippageBps: settings.maxSlippageBps,
   };
   const summary = `${debtToken.symbol}/${collateralToken.symbol} repay=${repayAmount} withdraw=${withdrawAmount}`;
   return { config, summary };
@@ -77,7 +75,7 @@ export async function evaluateLiquidationReadiness(
     return { trigger: false, healthFactor: Infinity, reason: built.reason };
   }
   const healthFactor = await readAaveHealthFactor(dsaAddress);
-  const threshold = toNumber(settings.liquidationHealthFactor);
+  const threshold = Number(settings.liquidationHealthFactor?.toString() ?? "0");
   if (!Number.isFinite(healthFactor) || healthFactor <= 0) {
     return { trigger: false, healthFactor, reason: "Aave health factor unavailable." };
   }

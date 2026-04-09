@@ -111,6 +111,12 @@ export async function POST(request: NextRequest) {
     if (body.liquidationCollateralToken && !isAddress(body.liquidationCollateralToken)) {
       return NextResponse.json({ error: "liquidationCollateralToken must be a valid address" }, { status: 400 });
     }
+    if (body.liquidationRateMode !== undefined && body.liquidationRateMode !== 1 && body.liquidationRateMode !== 2) {
+      return NextResponse.json({ error: "liquidationRateMode must be 1 (stable) or 2 (variable)" }, { status: 400 });
+    }
+    if (body.liquidationHealthFactor !== undefined && body.liquidationHealthFactor !== null && body.liquidationHealthFactor <= 0) {
+      return NextResponse.json({ error: "liquidationHealthFactor must be greater than 0" }, { status: 400 });
+    }
 
     const settings = await prisma.strategySettings.upsert({
       where: { dsaAccountId: dsa.id },
@@ -129,13 +135,30 @@ export async function POST(request: NextRequest) {
           body.liquidationHealthFactor != null
             ? new Prisma.Decimal(body.liquidationHealthFactor)
             : undefined,
-        liquidationDebtToken: body.liquidationDebtToken != null ? body.liquidationDebtToken.toLowerCase() : undefined,
+        liquidationDebtToken:
+          body.liquidationDebtToken === null
+            ? null
+            : body.liquidationDebtToken !== undefined
+              ? body.liquidationDebtToken.toLowerCase()
+              : undefined,
         liquidationCollateralToken:
-          body.liquidationCollateralToken != null ? body.liquidationCollateralToken.toLowerCase() : undefined,
+          body.liquidationCollateralToken === null
+            ? null
+            : body.liquidationCollateralToken !== undefined
+              ? body.liquidationCollateralToken.toLowerCase()
+              : undefined,
         liquidationRepayAmount:
-          body.liquidationRepayAmount != null ? new Prisma.Decimal(body.liquidationRepayAmount) : undefined,
+          body.liquidationRepayAmount === undefined
+            ? undefined
+            : body.liquidationRepayAmount === null
+              ? null
+              : new Prisma.Decimal(body.liquidationRepayAmount),
         liquidationWithdrawAmount:
-          body.liquidationWithdrawAmount != null ? new Prisma.Decimal(body.liquidationWithdrawAmount) : undefined,
+          body.liquidationWithdrawAmount === undefined
+            ? undefined
+            : body.liquidationWithdrawAmount === null
+              ? null
+              : new Prisma.Decimal(body.liquidationWithdrawAmount),
         liquidationRateMode: body.liquidationRateMode ?? undefined,
         allowedPairs,
         cooldownSeconds: body.cooldownSeconds ?? undefined,

@@ -204,12 +204,26 @@ export async function executeLiquidationExecution(
   executionId: string
 ): Promise<void> {
   const settings = await db.strategySettings.findUnique({ where: { id: settingsId } });
+
+  if (!settings) {
+    await markFailure({
+      settingsId,
+      executionId,
+      reason: "Missing settings or authorized DSA account.",
+      hardStop: true,
+    });
+    return;
+  }
+
   const dsaAccount = await db.dsaAccount.findFirst({
-    where: { userId, authorityEnabled: true },
-    orderBy: { updatedAt: "desc" },
+    where: {
+      id: settings.dsaAccountId,
+      userId,
+      authorityEnabled: true,
+    },
   });
 
-  if (!settings || !dsaAccount) {
+  if (!dsaAccount) {
     await markFailure({
       settingsId,
       executionId,

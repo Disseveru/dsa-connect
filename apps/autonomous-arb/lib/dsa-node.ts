@@ -146,6 +146,7 @@ export type FlashLoanLiquidationConfig = {
   withdrawAmountWei: bigint;
   rateMode: number;
   uniswapFeeTier: number;
+  maxSlippageBps: number;
 };
 
 export function buildFlashLoanLiquidationSpell(dsa: DsaLike, config: FlashLoanLiquidationConfig) {
@@ -167,7 +168,11 @@ export function buildFlashLoanLiquidationSpell(dsa: DsaLike, config: FlashLoanLi
       config.debtToken,
       config.collateralToken,
       config.uniswapFeeTier,
-      "1",
+      // unitAmt: minimum debtToken per 1e18 wei of collateralToken sold, with slippage applied
+      (
+        (config.repayAmountWei * BigInt(10000 - config.maxSlippageBps) * BigInt(1e18)) /
+        (config.withdrawAmountWei * 10000n)
+      ).toString(),
       config.withdrawAmountWei.toString(),
       0,
       0,
