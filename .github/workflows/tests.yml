@@ -37,6 +37,10 @@ jobs:
           PUBLIC_ADDRESS: ${{ secrets.PUBLIC_ADDRESS }}
           ETH_NODE_URL: ${{ secrets.ETH_NODE_URL }}
 
+      - name: Wait for Fork
+        # Wait up to 60 seconds for ganache to be ready on port 8545 before running tests
+        run: npx wait-on tcp:localhost:8545 --timeout 60000
+
       - name: Tests
         run: npm run test -- --runInBand --detectOpenHandles --forceExit
         env:
