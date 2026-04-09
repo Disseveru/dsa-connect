@@ -72,7 +72,7 @@ export function DashboardClient() {
   const { signMessageAsync } = useSignMessage();
   const supportedTokens = useMemo(
     () => [
-      { symbol: "USDC", address: "0xaf88d065e77c8cc2239327c5edb3a432268e583" },
+      { symbol: "USDC", address: "0xaf88d065e77c8cc2239327c5edb3a432268e5831" },
       { symbol: "USDT", address: "0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9" },
       { symbol: "DAI", address: "0xda10009cbd5d07dd0cecc66161fc93d7c9000da1" },
       { symbol: "WETH", address: "0x82af49447d8a07e3bd95bd0d56f35241523fbab1" },
@@ -185,7 +185,7 @@ export function DashboardClient() {
   }
 
   const defaultAllowedPairs = useMemo(
-    () => settings?.settings?.allowedPairs?.join(",") ?? "0xaf88d065e77c8cc2239327c5edb3a432268e583:0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+    () => settings?.settings?.allowedPairs?.join(",") ?? "0xaf88d065e77c8cc2239327c5edb3a432268e5831:0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
     [settings]
   );
 
@@ -196,7 +196,7 @@ export function DashboardClient() {
     gasCeilingGwei: "0.2",
     maxPositionUsd: "500",
     liquidationHealthFactor: "1.05",
-    liquidationDebtToken: "0xaf88d065e77c8cc2239327c5edb3a432268e583",
+    liquidationDebtToken: "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
     liquidationCollateralToken: "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
     liquidationRepayAmount: "500",
     liquidationWithdrawAmount: "0.25",

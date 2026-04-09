@@ -170,7 +170,7 @@ export function buildFlashLoanLiquidationSpell(dsa: DsaLike, config: FlashLoanLi
       config.uniswapFeeTier,
       // unitAmt: minimum debtToken per 1e18 wei of collateralToken sold, with slippage applied
       (
-        (config.repayAmountWei * BigInt(10000 - config.maxSlippageBps) * BigInt(1e18)) /
+        (config.repayAmountWei * BigInt(10000 - config.maxSlippageBps) * (10n ** 18n)) /
         (config.withdrawAmountWei * 10000n)
       ).toString(),
       config.withdrawAmountWei.toString(),
