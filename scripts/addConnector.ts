@@ -47,6 +47,7 @@ const fantomConnectorsV2 = ftmConnectorsV2_M1 as Obj
 
 let connectorsV1Template = `export const connectorsV1 = `
 let connectorsV2Template = `export const connectorsV2_M1 = `
+const jsIdentifierPattern = /^[A-Za-z_$][A-Za-z0-9_$]*$/
 
 const abiChoices = ['From Address', 'From JSON File Path', 'From JSON (via URL)']
 const questions = [
@@ -60,14 +61,8 @@ const questions = [
     type: 'input',
     name: 'variable_name',
     message: 'Enter the connector variable name? (ex: curve_claim or ONEINCH_A)',
-    validate: (name: string) => {
-      try {
-        Function('var ' + name)
-      } catch (_) {
-        return false || 'Connector variable name is required!'
-      }
-      return true
-    },
+    validate: (name: string) =>
+      jsIdentifierPattern.test(name) || 'Connector variable name must be a valid JavaScript identifier.',
   },
   {
     type: 'list',
@@ -109,7 +104,7 @@ const questions = [
   if (answers.version === 1) {
     if (answers.chain === 'Mainnet') {
       if (mainnetConnectorsV1[answers.variable_name]) {
-        throw new Error('Mainnet Connectors V1 already contains ' + answers.variable)
+        throw new Error('Mainnet Connectors V1 already contains ' + answers.variable_name)
       }
       mainnetConnectorsV1[answers.variable_name] = answers.address
       connectorsV1Template += JSON.stringify(mainnetConnectorsV1, null, 4)

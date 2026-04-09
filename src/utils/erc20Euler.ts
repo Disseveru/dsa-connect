@@ -5,7 +5,6 @@ import { TokenInfo } from '../data/token-info'
 import { TransactionConfig } from 'web3-core'
 import { GetTransactionConfigParams } from '../internal'
 import { Contract } from 'web3-eth-contract';
-import BigNumber from 'bignumber.js'
 
 /**
  * @param {address} _d.token token address or symbol
@@ -145,10 +144,20 @@ type Erc20EulerApproveSubAccountInputParams = {
     if (!params.from) {
       params.from = await this.dsa.internal.getAddress()
     }
-    if (
-      (new BigNumber(params.subAccountId).gte(256))
-    ) {
-        throw new Error("'subAccountId' cannot be greater than 255")
+
+    let subAccountId
+    try {
+      subAccountId = this.dsa.web3.utils.toBN(params.subAccountId)
+    } catch (_) {
+      throw new Error("'subAccountId' must be a valid non-negative integer")
+    }
+
+    if (subAccountId.isNeg()) {
+      throw new Error("'subAccountId' must be a valid non-negative integer")
+    }
+
+    if (subAccountId.gte(this.dsa.web3.utils.toBN(256))) {
+      throw new Error("'subAccountId' cannot be greater than 255")
     }
 
     let txObj: TransactionConfig;
@@ -160,7 +169,7 @@ type Erc20EulerApproveSubAccountInputParams = {
       params.to = this.dsa.internal.filterAddress(params.token)
       const contract = new this.dsa.web3.eth.Contract(Abi.basics.erc20Euler, params.to)
       const data: string = contract.methods
-        .approveSubAccount(params.subAccountId, toAddr, params.amount)
+        .approveSubAccount(subAccountId.toString(), toAddr, params.amount)
         .encodeABI()
 
       txObj = await this.dsa.internal.getTransactionConfig({

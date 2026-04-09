@@ -32,6 +32,8 @@ public/js/lib/popper.min*
 
 # API keys and secrets
 .env
+.vercel
+vercel-static
 
 # Dependency directory
 node_modules
