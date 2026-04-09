@@ -6,6 +6,70 @@
 
 The official DSA SDK for JavaScript, available for browsers and Node.js backends.
 
+---
+
+## 🚀 Web App — Arbitrum Flashloan Arbitrage UI (`apps/web`)
+
+A non-coder-friendly Next.js web app for executing flashloan arbitrage on Arbitrum One via Instadapp DSA v2.  
+Live at: **[deploy to Vercel — see below]**
+
+### Prerequisites
+
+- Node.js 18+
+- npm or pnpm
+
+### Install & Run Locally
+
+```bash
+# Using npm
+cd apps/web
+npm install
+npm run dev
+
+# Using pnpm (from repo root)
+pnpm --filter dsa-connect-web install
+pnpm --filter dsa-connect-web dev
+```
+
+Then open [http://localhost:3000](http://localhost:3000).
+
+### Environment Variables
+
+Copy `apps/web/.env.example` to `apps/web/.env.local` and fill in:
+
+```bash
+cp apps/web/.env.example apps/web/.env.local
+# Edit apps/web/.env.local and set:
+# NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_project_id_from_walletconnect_cloud
+```
+
+Get a free WalletConnect Project ID at [cloud.walletconnect.com](https://cloud.walletconnect.com).
+
+### Deploy to Vercel
+
+The repo root contains a `vercel.json` that configures Vercel to build from `apps/web`.
+
+**One-click deploy:**
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Disseveru/dsa-connect)
+
+**Manual steps:**
+1. Go to [vercel.com](https://vercel.com) → **New Project** → Import `Disseveru/dsa-connect`
+2. Vercel will auto-detect the `vercel.json` settings (framework: Next.js, root: `apps/web`)
+3. Add environment variable: `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` = your WalletConnect project ID
+4. Click **Deploy**
+
+### Build for Production
+
+```bash
+cd apps/web
+npm install
+npm run build
+npm start
+```
+
+---
+
 
 
 
